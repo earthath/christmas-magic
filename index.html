@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create Christmas cards, discover daily surprises, take personality quizzes, hang socks on a global map, and play festive games!">
+    <meta name="keywords" content="Christmas, cards, advent calendar, quiz, games, holiday">
+    <meta name="author" content="Christmas Magic">
+    <meta property="og:title" content="🎄 Christmas Magic - Ultimate Christmas Website">
+    <meta property="og:description" content="Create cards, discover surprises, and find your Christmas character!">
+    <meta property="og:type" content="website">
+    <title>🎄 Ultimate Christmas Website</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Onest:wght@300;400;500;600;700;800&family=Rethink+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- Leaflet and html2canvas loaded dynamically when needed -->
+</head>
+<body>
+    <!-- Skip to Main Content Link -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
+    <div class="page-wrapper" id="main-content">
+    <!-- Animated Snow Background -->
+    <div class="snow-container" id="snowContainer"></div>
+
+    <!-- Christmas Tree Decorations -->
+    <div class="tree-decoration tree-left">🎄</div>
+    <div class="tree-decoration tree-right">🎄</div>
+
+    <!-- Sound Toggle -->
+    <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound">
+        🔊
+    </button>
+    
+    <!-- Dark Mode Toggle -->
+    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+        🌙
+    </button>
+    
+    <!-- Snow Toggle -->
+    <button class="snow-toggle" id="snowToggle" aria-label="Toggle snow animation">
+        ❄️
+    </button>
+    
+    <!-- Music Player -->
+    <div class="music-player" id="musicPlayer" style="display: none;">
+        <button class="music-toggle" id="musicToggle">🎵</button>
+        <div class="music-info">
+            <div class="music-title" id="musicTitle">Christmas Music</div>
+            <div class="music-artist" id="musicArtist">Background</div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+        <!-- Curved Loop Text Animation -->
+        <div class="curved-loop-container">
+            <svg class="curved-loop-svg" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <path id="curvedPath" d="M 0,200 Q 300,50 600,200 T 1200,200" fill="none" stroke="none"/>
+                </defs>
+                <text class="curved-text" fill="var(--christmas-gold)">
+                    <textPath href="#curvedPath" id="curvedTextPath">
+                        MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦ MERRY✦ CHRISTMAS ✦
+                    </textPath>
+                </text>
+            </svg>
+        </div>
+        
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="title-line">🎄 Welcome to</span>
+                <span class="title-main">Christmas Magic</span>
+            </h1>
+            <p class="hero-subtitle">Create cards, discover surprises, and find your Christmas character!</p>
+            
+            <!-- Christmas Countdown Timer -->
+            <div class="countdown-container" id="countdownContainer">
+                <div class="countdown-item">
+                    <span class="countdown-number" id="days">0</span>
+                    <span class="countdown-label">Days</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="hours">0</span>
+                    <span class="countdown-label">Hours</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="minutes">0</span>
+                    <span class="countdown-label">Minutes</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-number" id="seconds">0</span>
+                    <span class="countdown-label">Seconds</span>
+                </div>
+            </div>
+            <div class="flowing-menu">
+                <div class="flowing-menu-bg" id="flowingMenuBg"></div>
+                <div class="hero-buttons">
+                    <button class="hero-btn primary" data-section="card-maker">
+                        <span class="btn-content">✉️ Create Card</span>
+                    </button>
+                    <button class="hero-btn secondary" data-section="advent-calendar">
+                        <span class="btn-content">🎁 Open Calendar</span>
+                    </button>
+                    <button class="hero-btn secondary" data-section="personality-quiz">
+                        <span class="btn-content">🎭 Take Quiz</span>
+                    </button>
+                    <button class="hero-btn secondary" data-section="sock-hanging">
+                        <span class="btn-content">🧦 Hang Sock</span>
+                    </button>
+                    <button class="hero-btn secondary" data-section="gift-exchange">
+                        <span class="btn-content">🎁 Gift Exchange</span>
+                    </button>
+                    <button class="hero-btn secondary" data-section="games">
+                        <span class="btn-content">🎮 Games</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="hero-ornaments">
+            <span class="ornament">⭐</span>
+            <span class="ornament">🎁</span>
+            <span class="ornament">❄️</span>
+            <span class="ornament">🔔</span>
+            <span class="ornament">🦌</span>
+        </div>
+    </section>
+
+    <!-- Main Navigation -->
+    <nav class="main-nav" style="display: none;">
+        <div class="nav-container">
+            <h1 class="logo">🎄 Christmas Magic</h1>
+            <div class="nav-buttons">
+                <button class="nav-btn active" data-section="card-maker">✉️ Card Maker</button>
+                <button class="nav-btn" data-section="advent-calendar">🎁 Advent Calendar</button>
+                <button class="nav-btn" data-section="personality-quiz">🎭 Quiz</button>
+                <button class="nav-btn" data-section="sock-hanging">🧦 Hang Sock</button>
+                <button class="nav-btn" data-section="gift-exchange">🎁 Gift Exchange</button>
+                <button class="nav-btn" data-section="games">🎮 Games</button>
+            </div>
+        </div>
+    </nav>
+    
+
+    <!-- Card Maker Section -->
+    <section id="card-maker" class="section active">
+        <div class="container">
+            <h2 class="section-title">✉️ Create Your Christmas Card</h2>
+            
+            <div class="card-maker-wrapper">
+                <!-- Card Preview -->
+                <div class="card-preview-container">
+                    <div class="card-preview" id="cardPreview">
+                        <div class="card-frame-overlay" id="cardFrameOverlay"></div>
+                        <div class="card-content" id="cardContent">
+                            <!-- Postcard Template Layout -->
+                            <div class="postcard-layout" id="postcardLayout" style="display: none;">
+                                <div class="postcard-message-side">
+                                    <textarea class="postcard-message" id="postcardMessage" placeholder="Write your message here...">Happy Holidays!
+We just wanted to wish you guys a Merry Christmas and a happy new year.</textarea>
+                                    <div class="postcard-signature">
+                                        <input type="text" class="signature-input" id="postcardSignature" placeholder="Your name" value="Love, Johnny & Moira">
+                                    </div>
+                                </div>
+                                <div class="postcard-divider"></div>
+                                <div class="postcard-address-side">
+                                    <div class="postcard-stamp" id="postcardStamp">
+                                        <div class="stamp-logo" id="stampLogo">🎄</div>
+                                        <img id="stampImage" class="stamp-image" style="display: none;" alt="Stamp">
+                                    </div>
+                                    <div class="postcard-address">
+                                        <textarea class="address-input" id="postcardAddress" placeholder="Recipient Address">Roland and Jocelyn Schitt
+4130 Concession Road
+Schitt's Creek, PA 24216</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Regular Card Layout -->
+                            <div class="regular-card-layout" id="regularCardLayout">
+                                <div class="uploaded-image-container" id="uploadedImageContainer" style="display: none;">
+                                    <img id="uploadedImage" class="uploaded-image" alt="User Image">
+                                </div>
+                                <textarea class="card-message" id="cardMessage" placeholder="Write your Christmas message here...">Merry Christmas!</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controls Panel -->
+                <div class="controls-panel">
+                    <!-- Tab Navigation -->
+                    <div class="tab-navigation">
+                        <button class="tab-btn active" data-tab="background">🎨 Background</button>
+                        <button class="tab-btn" data-tab="text">📝 Text</button>
+                        <button class="tab-btn" data-tab="image">🖼️ Image</button>
+                        <button class="tab-btn" data-tab="decoration">✨ Decoration</button>
+                        <button class="tab-btn" data-tab="options">⚙️ Options</button>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div class="tab-contents">
+                        <!-- Background Tab -->
+                        <div class="tab-content active" id="tab-background">
+                            <div class="control-group">
+                                <h3>📋 Templates</h3>
+                                <div class="template-buttons">
+                                    <button class="template-btn active" data-template="classic">Classic</button>
+                                    <button class="template-btn" data-template="winter">Winter</button>
+                                    <button class="template-btn" data-template="elegant">Elegant</button>
+                                    <button class="template-btn" data-template="postcard">📮 Postcard</button>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <h3>🎨 Background Colors</h3>
+                                <div class="color-buttons">
+                                    <button class="color-btn" data-color="#C8102E" style="background: #C8102E;"></button>
+                                    <button class="color-btn" data-color="#0F5132" style="background: #0F5132;"></button>
+                                    <button class="color-btn" data-color="#FFB81C" style="background: #FFB81C;"></button>
+                                    <button class="color-btn" data-color="#E63946" style="background: #E63946;"></button>
+                                    <button class="color-btn" data-color="#0A4029" style="background: #0A4029;"></button>
+                                    <button class="color-btn" data-color="#FFD700" style="background: #FFD700;"></button>
+                                    <button class="color-btn" data-color="#8B0000" style="background: #8B0000;"></button>
+                                    <button class="color-btn" data-color="#228B22" style="background: #228B22;"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Text Tab -->
+                        <div class="tab-content" id="tab-text">
+                            <div class="control-group">
+                                <h3>📝 Text Customization</h3>
+                                <div class="text-size-control">
+                                    <label>Size</label>
+                                    <input type="range" id="textSizeSlider" min="1.5" max="4" step="0.25" value="2.5" class="size-slider">
+                                    <div class="size-display">
+                                        <span id="textSizeValue">2.5rem</span>
+                                    </div>
+                                </div>
+                                <div class="text-color-control">
+                                    <label>Text Color</label>
+                                    <div class="color-buttons">
+                                        <button class="color-btn" data-textcolor="#FFFFFF" style="background: #FFFFFF;" title="White"></button>
+                                        <button class="color-btn" data-textcolor="#FFB81C" style="background: #FFB81C;" title="Gold"></button>
+                                        <button class="color-btn" data-textcolor="#FFD700" style="background: #FFD700;" title="Yellow"></button>
+                                        <button class="color-btn" data-textcolor="#FF6B6B" style="background: #FF6B6B;" title="Red"></button>
+                                        <button class="color-btn" data-textcolor="#4ECDC4" style="background: #4ECDC4;" title="Cyan"></button>
+                                        <button class="color-btn" data-textcolor="#FFE66D" style="background: #FFE66D;" title="Light Yellow"></button>
+                                    </div>
+                                </div>
+                                <div class="text-align-control">
+                                    <label>Alignment</label>
+                                    <div class="align-buttons">
+                                        <button class="align-btn" data-align="left" title="Left">⬅</button>
+                                        <button class="align-btn active" data-align="center" title="Center">⬌</button>
+                                        <button class="align-btn" data-align="right" title="Right">➡</button>
+                                    </div>
+                                </div>
+                                <div class="text-font-control">
+                                    <label>Font</label>
+                                    <select id="textFont" class="font-select">
+                                        <option value="Poppins">Poppins</option>
+                                        <option value="Onest">Onest</option>
+                                        <option value="Rethink Sans">Rethink Sans</option>
+                                        <option value="Dancing Script">Dancing Script (Handwriting)</option>
+                                        <option value="Kalam">Kalam (Handwriting)</option>
+                                        <option value="Arial">Arial</option>
+                                        <option value="Georgia">Georgia</option>
+                                        <option value="Times New Roman">Times New Roman</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Tab -->
+                        <div class="tab-content" id="tab-image">
+                            <div class="control-group">
+                                <h3>🖼️ Upload Image</h3>
+                                <div class="image-upload-area" id="imageUploadArea">
+                                    <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                                    <div class="upload-placeholder">
+                                        <span class="upload-icon">📷</span>
+                                        <p>Click or drag image here</p>
+                                        <button class="upload-btn" id="uploadImageBtn">Choose Image</button>
+                                    </div>
+                                </div>
+                                <div class="image-controls" id="imageControls" style="display: none;">
+                                    <div class="image-preview-container">
+                                        <img id="uploadedImagePreview" class="image-preview" alt="Uploaded">
+                                        <button class="remove-image-btn" id="removeImageBtn">✕ Remove</button>
+                                    </div>
+                                    <div class="image-adjust-controls">
+                                        <label>Opacity</label>
+                                        <input type="range" id="imageOpacity" min="0" max="100" value="100" class="size-slider">
+                                        <span id="imageOpacityValue">100%</span>
+                                    </div>
+                                    <div class="image-adjust-controls">
+                                        <label>Size</label>
+                                        <input type="range" id="imageSize" min="20" max="200" value="100" class="size-slider">
+                                        <span id="imageSizeValue">100%</span>
+                                    </div>
+                                    <div class="image-position-controls">
+                                        <label>Position</label>
+                                        <div class="position-buttons">
+                                            <button class="position-btn" data-position="top-left">↖</button>
+                                            <button class="position-btn" data-position="top-center">↑</button>
+                                            <button class="position-btn" data-position="top-right">↗</button>
+                                            <button class="position-btn" data-position="center-left">←</button>
+                                            <button class="position-btn active" data-position="center">⊙</button>
+                                            <button class="position-btn" data-position="center-right">→</button>
+                                            <button class="position-btn" data-position="bottom-left">↙</button>
+                                            <button class="position-btn" data-position="bottom-center">↓</button>
+                                            <button class="position-btn" data-position="bottom-right">↘</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Decoration Tab -->
+                        <div class="tab-content" id="tab-decoration">
+                            <div class="control-group">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                                    <h3 style="margin: 0;">✨ Decorations</h3>
+                                    <button class="clear-btn" id="clearDecorations">Clear All</button>
+                                </div>
+                                <div class="decorations-grid" id="decorationsGrid">
+                                    <!-- Decorations will be added via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Options Tab -->
+                        <div class="tab-content" id="tab-options">
+                            <div class="control-group">
+                                <h3>🎴 Card Options</h3>
+                                <div class="card-options">
+                                    <label class="option-label">
+                                        <input type="checkbox" id="textShadow" checked>
+                                        <span>Text Shadow</span>
+                                    </label>
+                                    <label class="option-label">
+                                        <input type="checkbox" id="cardBorder">
+                                        <span>Card Border</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <h3>💾 Actions</h3>
+                                <div class="action-buttons-grid">
+                                    <button class="action-btn download-btn" id="downloadCard">📥 Download</button>
+                                    <button class="action-btn email-btn" id="emailCard">📧 Email</button>
+                                    <button class="action-btn share-btn" id="shareCard">📱 Share</button>
+                                    <button class="action-btn reset-btn" id="resetCard">🔄 Reset</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Page Stats -->
+            <div class="page-stats" id="cardPageStats">
+                <div class="page-stat-item">
+                    <span class="page-stat-number" id="cardTotal">0</span>
+                    <span class="page-stat-label">Cards Created Total</span>
+                </div>
+                <div class="page-stat-item">
+                    <span class="page-stat-number" id="cardToday">0</span>
+                    <span class="page-stat-label">Cards Created Today</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advent Calendar Section -->
+    <section id="advent-calendar" class="section">
+        <div class="container">
+            <h2 class="section-title">🎁 Advent Calendar</h2>
+            <p class="section-subtitle">Open a door each day from December 1-25 to reveal your daily surprise!</p>
+            
+            <div class="calendar-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.75rem; max-width: 900px; margin: 0 auto 1rem; text-align: center; font-weight: 600; color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                <div>Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div>Sat</div>
+            </div>
+            
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Calendar will be generated via JavaScript -->
+            </div>
+
+            <!-- Door Content Modal -->
+            <div class="modal" id="doorModal">
+                <div class="modal-content">
+                    <button class="modal-close" id="closeModal">&times;</button>
+                    <div class="modal-body" id="modalBody"></div>
+                </div>
+            </div>
+            
+            <!-- Share Modal -->
+            <div class="modal" id="shareModal" style="display: none;">
+                <div class="modal-content">
+                    <button class="modal-close" id="closeShareModal">&times;</button>
+                    <div class="modal-body" id="shareModalBody"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Personality Quiz Section -->
+    <section id="personality-quiz" class="section">
+        <div class="container">
+            <h2 class="section-title">🎭 Which Christmas Character Are You?</h2>
+            
+            <div class="quiz-container" id="quizContainer">
+                <!-- Quiz will be dynamically generated -->
+            </div>
+
+            <!-- Result Section -->
+            <div class="quiz-result" id="quizResult" style="display: none;">
+                <div class="result-content" id="resultContent"></div>
+                <button class="action-btn share-btn" id="shareResult">📱 Share Your Result</button>
+                <button class="action-btn retake-btn" id="retakeQuiz">🔄 Take Quiz Again</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sock Hanging Section -->
+    <section id="sock-hanging" class="section">
+        <div class="container">
+            <!-- Header -->
+            <div class="sock-header">
+                <h2 class="sock-main-title">🧦 Sock Billboard</h2>
+                <p class="sock-tagline">Hang your sock anywhere in the world to spread Christmas cheer!</p>
+                
+                <!-- Stats Section -->
+                <div class="sock-stats-compact">
+                    <div class="stat-item">
+                        <div class="stat-number-compact" id="totalSocks">0</div>
+                        <div class="stat-label-compact">Total Socks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number-compact" id="currentDisplay">0</div>
+                        <div class="stat-label-compact">Currently Displayed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number-compact" id="hangingNow">0</div>
+                        <div class="stat-label-compact">Hanging Now</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main 2-Column Layout -->
+            <div class="sock-main-grid">
+                <!-- Left Column -->
+                <div class="sock-left-column">
+                    <!-- Hang Sock Form -->
+                    <div class="sock-form-container">
+                        <h3 class="form-title">✨ Hang Your Sock Here</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Sock Selection</label>
+                            <div class="sock-grid" id="sockGrid">
+                                <button class="sock-option active" data-sock="🧦" data-name="Red Sock">
+                                    <span class="sock-emoji">🧦</span>
+                                    <span class="sock-name">Red Sock</span>
+                                </button>
+                                <button class="sock-option" data-sock="🧤" data-name="Green Sock">
+                                    <span class="sock-emoji">🧤</span>
+                                    <span class="sock-name">Green Sock</span>
+                                </button>
+                                <button class="sock-option" data-sock="🧥" data-name="Striped Sock">
+                                    <span class="sock-emoji">🧥</span>
+                                    <span class="sock-name">Striped Sock</span>
+                                </button>
+                                <button class="sock-option" data-sock="🎄" data-name="Tree Sock">
+                                    <span class="sock-emoji">🎄</span>
+                                    <span class="sock-name">Tree Sock</span>
+                                </button>
+                                <button class="sock-option" data-sock="⭐" data-name="Star Sock">
+                                    <span class="sock-emoji">⭐</span>
+                                    <span class="sock-name">Star Sock</span>
+                                </button>
+                                <button class="sock-option" data-sock="🎁" data-name="Gift Sock">
+                                    <span class="sock-emoji">🎁</span>
+                                    <span class="sock-name">Gift Sock</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Message (Optional)</label>
+                            <textarea id="sockMessage" class="sock-message" placeholder="Enter a message to send with your sock..." maxlength="100"></textarea>
+                            <div class="char-counter"><span id="charCount">0</span>/100</div>
+                        </div>
+
+                        <button class="hang-sock-btn-large" id="hangSockBtn">
+                            <span class="btn-icon">✨</span>
+                            <span class="btn-sock" id="btnSockEmoji">🧦</span>
+                            <span class="btn-text">Hang Sock!</span>
+                        </button>
+                        
+                        <!-- Share Button (shown after hanging) -->
+                        <button class="action-btn share-sock-btn" id="shareSockBtn" style="display: none; margin-top: 0.75rem;">
+                            📱 Share Your Sock
+                        </button>
+                    </div>
+
+                    <!-- Map Section -->
+                    <div class="sock-map-container">
+                        <div class="map-header">
+                            <h3 class="map-title">🗺️ Global Sock Map</h3>
+                            <div class="map-info">
+                                <span id="mapCount">0</span> socks displayed
+                            </div>
+                        </div>
+                        <div class="sock-map" id="sockMap">
+                            <!-- Map will be generated via JavaScript -->
+                        </div>
+                        <p class="map-hint">💡 See socks hung around the world in real-time (updates every 5 seconds)</p>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="sock-right-column">
+                    <!-- Real-time Feed -->
+                    <div class="sock-feed-container">
+                        <h3 class="feed-title">⚡ Real-time Feed</h3>
+                        <div class="sock-feed" id="sockFeed">
+                            <!-- Feed items will be added via JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Rankings -->
+                    <div class="sock-rankings-container">
+                        <h3 class="rankings-title">🌍 Country Rankings</h3>
+                        
+                        <!-- Filter and Search -->
+                        <div class="sock-filters">
+                            <input type="text" id="sockSearch" class="sock-search" placeholder="🔍 Search socks...">
+                            <select id="countryFilter" class="country-filter">
+                                <option value="">All Countries</option>
+                            </select>
+                        </div>
+                        
+                        <div class="rankings-list" id="rankingsList">
+                            <!-- Rankings will be generated via JavaScript -->
+                        </div>
+                        <p class="rankings-hint">💡 Help your country reach #1!</p>
+                        
+                        <button class="action-btn secondary" id="exportMapBtn" style="margin-top: 1rem; width: 100%;">
+                            📸 Export Map View
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Page Stats -->
+            <div class="page-stats" id="sockPageStats">
+                <div class="page-stat-item">
+                    <span class="page-stat-number" id="sockTotal">0</span>
+                    <span class="page-stat-label">Socks Hung Total</span>
+                </div>
+                <div class="page-stat-item">
+                    <span class="page-stat-number" id="sockToday">0</span>
+                    <span class="page-stat-label">Socks Hung Today</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gift Exchange Section -->
+    <section id="gift-exchange" class="section">
+        <div class="container">
+            <h2 class="section-title">🎁 Secret Santa Generator</h2>
+            <p class="section-subtitle">Generate random pairings for your gift exchange!</p>
+            
+            <div class="gift-exchange-container">
+                <!-- Example Section -->
+                <div class="exchange-example">
+                    <h3>📋 How It Works</h3>
+                    <div class="example-content">
+                        <p>Add participants manually or use the auto-generator. Then generate random Secret Santa pairs!</p>
+                        <div class="example-pairs">
+                            <div class="example-pair">
+                                <strong>Alice</strong> → <span>Bob</span>
+                            </div>
+                            <div class="example-pair">
+                                <strong>Bob</strong> → <span>Charlie</span>
+                            </div>
+                            <div class="example-pair">
+                                <strong>Charlie</strong> → <span>Alice</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="exchange-form">
+                    <h3>Add Participants</h3>
+                    
+                    <!-- Auto Generator -->
+                    <div class="auto-generator-section">
+                        <label>Quick Generate:</label>
+                        <div class="generator-options">
+                            <input type="number" id="participantCount" placeholder="Count" min="2" max="50" value="5">
+                            <select id="generatorType">
+                                <option value="numbers">Numbers (1, 2, 3...)</option>
+                                <option value="letters">Letters (A, B, C...)</option>
+                                <option value="nicknames">Nicknames</option>
+                            </select>
+                            <button class="action-btn secondary" id="autoGenerate">Auto Generate</button>
+                        </div>
+                    </div>
+
+                    <div class="divider-text">OR</div>
+
+                    <!-- Manual Input -->
+                    <div class="participant-input">
+                        <input type="text" id="participantName" placeholder="Enter name..." maxlength="30">
+                        <button class="action-btn" id="addParticipant">Add</button>
+                    </div>
+                    <div class="participants-list" id="participantsList"></div>
+                    <button class="action-btn primary" id="generatePairs" disabled>Generate Pairs</button>
+                </div>
+                
+                <div class="pairs-result" id="pairsResult" style="display: none;">
+                    <h3>Your Gift Exchange Pairs</h3>
+                    <div id="pairsList"></div>
+                    <div class="pairs-actions">
+                        <button class="action-btn secondary" id="copyPairsText">📋 Copy Text</button>
+                        <button class="action-btn" id="resetExchange">Start Over</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Games Section -->
+    <section id="games" class="section">
+        <div class="container">
+            <h2 class="section-title">🎮 Christmas Games</h2>
+            <p class="section-subtitle">Play fun Christmas-themed games!</p>
+            
+            <div class="games-grid">
+                <div class="game-card" data-game="trivia">
+                    <div class="game-icon">❓</div>
+                    <h3>Christmas Trivia</h3>
+                    <p>Test your knowledge!</p>
+                </div>
+                <div class="game-card" data-game="memory">
+                    <div class="game-icon">🧠</div>
+                    <h3>Memory Game</h3>
+                    <p>Match the pairs!</p>
+                </div>
+                <div class="game-card" data-game="wordsearch">
+                    <div class="game-icon">🔍</div>
+                    <h3>Word Search</h3>
+                    <p>Find Christmas words!</p>
+                </div>
+                <div class="game-card" data-game="wordle">
+                    <div class="game-icon">🎯</div>
+                    <h3>Christmas Wordle</h3>
+                    <p>Guess the word!</p>
+                </div>
+            </div>
+            
+            <!-- Games Leaderboard -->
+            <div class="games-leaderboard" id="gamesLeaderboard" style="display: none;">
+                <h3>🏆 Leaderboard</h3>
+                <div class="leaderboard-tabs">
+                    <button class="leaderboard-tab active" data-game="trivia">Trivia</button>
+                    <button class="leaderboard-tab" data-game="memory">Memory</button>
+                    <button class="leaderboard-tab" data-game="wordsearch">Word Search</button>
+                    <button class="leaderboard-tab" data-game="wordle">Wordle</button>
+                </div>
+                <div class="leaderboard-content" id="leaderboardContent"></div>
+            </div>
+            
+            <!-- Trivia Game -->
+            <div class="game-container" id="triviaGame" style="display: none;">
+                <h3>Christmas Trivia</h3>
+                <div class="game-settings">
+                    <label>Difficulty:</label>
+                    <select id="triviaDifficulty" class="difficulty-select">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <label style="margin-left: 1rem;">Timer:</label>
+                    <select id="triviaTimer" class="timer-select">
+                        <option value="0">No Timer</option>
+                        <option value="30">30 seconds</option>
+                        <option value="60">60 seconds</option>
+                    </select>
+                </div>
+                <div class="trivia-timer-display" id="triviaTimerDisplay" style="display: none;">
+                    Time: <span id="triviaTimeLeft">0</span>s
+                </div>
+                <div class="trivia-question" id="triviaQuestion"></div>
+                <div class="trivia-options" id="triviaOptions"></div>
+                <div class="trivia-score">Score: <span id="triviaScore">0</span></div>
+                <button class="action-btn" id="triviaNext" style="display: none;">Next Question</button>
+            </div>
+            
+            <!-- Memory Game -->
+            <div class="game-container" id="memoryGame" style="display: none;">
+                <h3>Memory Game</h3>
+                <div class="game-settings">
+                    <label>Difficulty:</label>
+                    <select id="memoryDifficulty" class="difficulty-select">
+                        <option value="easy">Easy (6 pairs)</option>
+                        <option value="medium" selected>Medium (12 pairs)</option>
+                        <option value="hard">Hard (18 pairs)</option>
+                    </select>
+                    <label style="margin-left: 1rem;">Timer:</label>
+                    <select id="memoryTimer" class="timer-select">
+                        <option value="0">No Timer</option>
+                        <option value="60">1 minute</option>
+                        <option value="120">2 minutes</option>
+                    </select>
+                </div>
+                <div class="memory-timer-display" id="memoryTimerDisplay" style="display: none;">
+                    Time: <span id="memoryTimeLeft">0</span>s
+                </div>
+                <div class="memory-grid" id="memoryGrid"></div>
+                <div class="memory-score">Moves: <span id="memoryMoves">0</span></div>
+                <button class="action-btn" id="memoryReset">Reset</button>
+            </div>
+            
+            <!-- Word Search -->
+            <div class="game-container" id="wordsearchGame" style="display: none;">
+                <h3>Word Search</h3>
+                <div class="game-settings">
+                    <label>Difficulty:</label>
+                    <select id="wordsearchDifficulty" class="difficulty-select">
+                        <option value="easy">Easy (5 words)</option>
+                        <option value="medium" selected>Medium (10 words)</option>
+                        <option value="hard">Hard (15 words)</option>
+                    </select>
+                    <label style="margin-left: 1rem;">Timer:</label>
+                    <select id="wordsearchTimer" class="timer-select">
+                        <option value="0">No Timer</option>
+                        <option value="180">3 minutes</option>
+                        <option value="300">5 minutes</option>
+                    </select>
+                </div>
+                <div class="wordsearch-timer-display" id="wordsearchTimerDisplay" style="display: none;">
+                    Time: <span id="wordsearchTimeLeft">0</span>s
+                </div>
+                <div class="wordsearch-words">Find: <span id="wordsearchWords"></span></div>
+                <div class="wordsearch-grid" id="wordsearchGrid"></div>
+                <div class="wordsearch-found">Found: <span id="wordsearchFound">0</span>/<span id="wordsearchTotal">0</span></div>
+            </div>
+            
+            <!-- Wordle Game -->
+            <div class="game-container" id="wordleGame" style="display: none;">
+                <h3>Christmas Wordle</h3>
+                <div class="wordle-info">Guess the 5-letter Christmas word!</div>
+                <div class="wordle-grid" id="wordleGrid"></div>
+                <div class="wordle-keyboard" id="wordleKeyboard"></div>
+                <div class="wordle-message" id="wordleMessage"></div>
+                <button class="action-btn" id="wordleReset" style="display: none;">New Game</button>
+            </div>
+        </div>
+    </section>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <span class="footer-text">Contact me:</span>
+            <a href="mailto:dkxlvm22@gmail.com" class="footer-email">dkxlvm22@gmail.com</a>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
