@@ -321,17 +321,8 @@ function initHeroSection() {
             const section = btn.dataset.section;
             switchSection(section);
             
-            // Update nav buttons
-            document.querySelectorAll('.nav-btn').forEach(navBtn => {
-                navBtn.classList.remove('active');
-                if (navBtn.dataset.section === section) {
-                    navBtn.classList.add('active');
-                }
-            });
-            
-            // Hide hero and show nav
+            // Hide hero section (menu will be shown via toggle)
             document.getElementById('hero').style.display = 'none';
-            document.querySelector('.main-nav').style.display = 'block';
             
             // Initialize map if going to sock-hanging
             if (section === 'sock-hanging' && !map) {
@@ -607,45 +598,287 @@ function initMusicPlayer() {
     }
 }
 
-// Navigation
+// Staggered Menu Navigation - GSAP Implementation
 function initNavigation() {
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const homeBtn = document.getElementById('homeBtn');
+    // Wait for GSAP to be available
+    if (typeof gsap === 'undefined') {
+        console.error('GSAP is not loaded. Please check the CDN link.');
+        // Retry after a short delay
+        setTimeout(initNavigation, 100);
+        return;
+    }
+
+    const wrapper = document.getElementById('staggeredMenuWrapper');
+    const panel = document.getElementById('staggered-menu-panel');
+    const toggleBtn = document.getElementById('staggeredMenuToggle');
+    const preLayers = document.getElementById('preLayers');
+    const plusH = document.getElementById('plusH');
+    const plusV = document.getElementById('plusV');
+    const icon = document.getElementById('menuIcon');
+    const textInner = document.getElementById('toggleTextInner');
     const hero = document.getElementById('hero');
     
-    // Home button handler
-    if (homeBtn) {
-        homeBtn.addEventListener('click', () => {
-            // Hide all sections
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    if (!wrapper || !panel || !toggleBtn) {
+        console.error('Staggered menu elements not found');
+        return;
+    }
+    
+    let isOpen = false;
+    let busy = false;
+    let openTl = null;
+    let closeTween = null;
+    let spinTween = null;
+    let textCycleAnim = null;
+    let colorTween = null;
+    const position = wrapper.dataset.position || 'right';
+    
+    // Get prelayers
+    const preLayerEls = preLayers ? Array.from(preLayers.querySelectorAll('.sm-prelayer')) : [];
+    
+    // Initialize positions - check if elements exist
+    const offscreen = position === 'left' ? -100 : 100;
+    gsap.set([panel, ...preLayerEls], { xPercent: offscreen });
+    
+    if (plusH) gsap.set(plusH, { transformOrigin: '50% 50%', rotate: 0 });
+    if (plusV) gsap.set(plusV, { transformOrigin: '50% 50%', rotate: 90 });
+    if (icon) gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
+    if (textInner) gsap.set(textInner, { yPercent: 0 });
+    if (toggleBtn) gsap.set(toggleBtn, { color: '#e9e9ef' });
+    
+    // Build open timeline
+    function buildOpenTimeline() {
+        if (openTl) openTl.kill();
+        if (closeTween) {
+            closeTween.kill();
+            closeTween = null;
+        }
+        
+        const itemEls = Array.from(panel.querySelectorAll('.sm-panel-itemLabel'));
+        const numberEls = Array.from(panel.querySelectorAll('.sm-panel-list[data-numbering] .sm-panel-item'));
+        
+        if (itemEls.length) {
+            gsap.set(itemEls, { yPercent: 140, rotate: 10 });
+        }
+        if (numberEls.length) {
+            gsap.set(numberEls, { '--sm-num-opacity': 0 });
+        }
+        
+        const tl = gsap.timeline({ paused: true });
+        
+        // Animate prelayers
+        preLayerEls.forEach((el, i) => {
+            const start = Number(gsap.getProperty(el, 'xPercent'));
+            tl.fromTo(el, 
+                { xPercent: start }, 
+                { xPercent: 0, duration: 0.5, ease: 'power4.out' }, 
+                i * 0.07
+            );
+        });
+        
+        const lastTime = preLayerEls.length ? (preLayerEls.length - 1) * 0.07 : 0;
+        const panelInsertTime = lastTime + (preLayerEls.length ? 0.08 : 0);
+        const panelDuration = 0.65;
+        const panelStart = Number(gsap.getProperty(panel, 'xPercent'));
+        
+        tl.fromTo(panel,
+            { xPercent: panelStart },
+            { xPercent: 0, duration: panelDuration, ease: 'power4.out' },
+            panelInsertTime
+        );
+        
+        // Animate menu items
+        if (itemEls.length) {
+            const itemsStartRatio = 0.15;
+            const itemsStart = panelInsertTime + panelDuration * itemsStartRatio;
+            tl.to(itemEls, {
+                yPercent: 0,
+                rotate: 0,
+                duration: 1,
+                ease: 'power4.out',
+                stagger: { each: 0.1, from: 'start' }
+            }, itemsStart);
             
-            // Show hero section
-            if (hero) hero.style.display = 'block';
-            
-            // Remove active from all nav buttons
-            navButtons.forEach(b => b.classList.remove('active'));
-            homeBtn.classList.add('active');
-            
-            if (soundEnabled) playSound('click');
+            if (numberEls.length) {
+                tl.to(numberEls, {
+                    duration: 0.6,
+                    ease: 'power2.out',
+                    '--sm-num-opacity': 1,
+                    stagger: { each: 0.08, from: 'start' }
+                }, itemsStart + 0.1);
+            }
+        }
+        
+        openTl = tl;
+        return tl;
+    }
+    
+    // Play open animation
+    function playOpen() {
+        if (busy) return;
+        busy = true;
+        wrapper.setAttribute('data-open', 'true');
+        toggleBtn.setAttribute('aria-expanded', 'true');
+        toggleBtn.setAttribute('aria-label', 'Close menu');
+        panel.setAttribute('aria-hidden', 'false');
+        
+        const tl = buildOpenTimeline();
+        if (tl) {
+            tl.eventCallback('onComplete', () => {
+                busy = false;
+            });
+            tl.play(0);
+        } else {
+            busy = false;
+        }
+    }
+    
+    // Play close animation
+    function playClose() {
+        if (openTl) {
+            openTl.kill();
+            openTl = null;
+        }
+        
+        const all = [...preLayerEls, panel];
+        if (closeTween) closeTween.kill();
+        
+        closeTween = gsap.to(all, {
+            xPercent: offscreen,
+            duration: 0.32,
+            ease: 'power3.in',
+            overwrite: 'auto',
+            onComplete: () => {
+                const itemEls = Array.from(panel.querySelectorAll('.sm-panel-itemLabel'));
+                if (itemEls.length) {
+                    gsap.set(itemEls, { yPercent: 140, rotate: 10 });
+                }
+                const numberEls = Array.from(panel.querySelectorAll('.sm-panel-list[data-numbering] .sm-panel-item'));
+                if (numberEls.length) {
+                    gsap.set(numberEls, { '--sm-num-opacity': 0 });
+                }
+                wrapper.removeAttribute('data-open');
+                wrapper.style.pointerEvents = 'none';
+                toggleBtn.setAttribute('aria-expanded', 'false');
+                toggleBtn.setAttribute('aria-label', 'Open menu');
+                panel.setAttribute('aria-hidden', 'true');
+                busy = false;
+            }
         });
     }
     
-    // Other nav buttons
-    navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Skip "How" button and "Home" button - they have their own handlers
-            if (btn.id === 'howBtn' || btn.id === 'homeBtn') return;
+    // Animate icon
+    function animateIcon(opening) {
+        if (!icon) return;
+        if (spinTween) spinTween.kill();
+        if (opening) {
+            spinTween = gsap.to(icon, { rotate: 225, duration: 0.8, ease: 'power4.out', overwrite: 'auto' });
+        } else {
+            spinTween = gsap.to(icon, { rotate: 0, duration: 0.35, ease: 'power3.inOut', overwrite: 'auto' });
+        }
+    }
+    
+    // Animate text
+    function animateText(opening) {
+        if (!textInner) return;
+        if (textCycleAnim) textCycleAnim.kill();
+        
+        const currentLabel = opening ? 'Menu' : 'Close';
+        const targetLabel = opening ? 'Close' : 'Menu';
+        const cycles = 3;
+        const seq = [currentLabel];
+        let last = currentLabel;
+        for (let i = 0; i < cycles; i++) {
+            last = last === 'Menu' ? 'Close' : 'Menu';
+            seq.push(last);
+        }
+        if (last !== targetLabel) seq.push(targetLabel);
+        seq.push(targetLabel);
+        
+        // Update text lines
+        textInner.innerHTML = seq.map(l => `<span class="sm-toggle-line">${l}</span>`).join('');
+        
+        gsap.set(textInner, { yPercent: 0 });
+        const lineCount = seq.length;
+        const finalShift = ((lineCount - 1) / lineCount) * 100;
+        textCycleAnim = gsap.to(textInner, {
+            yPercent: -finalShift,
+            duration: 0.5 + lineCount * 0.07,
+            ease: 'power4.out'
+        });
+    }
+    
+    // Toggle menu
+    function toggleMenu() {
+        if (busy) {
+            console.log('Menu is busy, ignoring toggle');
+            return;
+        }
+        const target = !isOpen;
+        isOpen = target;
+        console.log('Toggling menu to:', target ? 'open' : 'close');
+        
+        if (target) {
+            wrapper.style.pointerEvents = 'auto';
+            playOpen();
+        } else {
+            playClose();
+        }
+        animateIcon(target);
+        animateText(target);
+    }
+    
+    // Menu item click handlers
+    const menuItems = panel.querySelectorAll('.sm-panel-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = item.dataset.section;
             
-            const section = btn.dataset.section;
-            if (section) {
+            if (section === 'home') {
+                // Hide all sections
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                // Show hero section
+                if (hero) hero.style.display = 'block';
+                // Close menu
+                if (isOpen) toggleMenu();
+            } else if (section) {
                 switchSection(section);
-                
-                navButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
                 // Hide hero section
                 if (hero) hero.style.display = 'none';
+                // Close menu
+                if (isOpen) toggleMenu();
             }
+            
+            if (soundEnabled) playSound('click');
+        });
+    });
+    
+    // How button handler
+    const howBtn = document.getElementById('howBtnStaggered');
+    if (howBtn) {
+        howBtn.addEventListener('click', () => {
+            if (isOpen) toggleMenu();
+            initHowButton();
+        });
+    }
+    
+    // Toggle button click
+    toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Menu toggle clicked, isOpen:', isOpen);
+        toggleMenu();
+    });
+    
+    console.log('Staggered menu initialized successfully');
+    
+    // Show menu when hero buttons are clicked
+    const heroButtons = document.querySelectorAll('.hero-btn');
+    heroButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            setTimeout(() => {
+                if (!isOpen) toggleMenu();
+            }, 100);
         });
     });
 }

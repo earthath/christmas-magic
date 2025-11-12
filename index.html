@@ -128,23 +128,81 @@
         </div>
     </section>
 
-    <!-- Main Navigation -->
-    <nav class="main-nav" style="display: none;">
-        <div class="nav-container">
-            <h1 class="logo">🎄 Christmas Magic</h1>
-            <div class="nav-buttons">
-                <button class="nav-btn" id="homeBtn">🏠 Home</button>
-                <button class="nav-btn active" data-section="card-maker">✉️ Card Maker</button>
-                <button class="nav-btn" data-section="advent-calendar">🎁 Advent Calendar</button>
-                <button class="nav-btn" data-section="personality-quiz">🎭 Quiz</button>
-                <button class="nav-btn" data-section="sock-hanging">🧦 Hang Sock</button>
-                <button class="nav-btn" data-section="gift-exchange">🎁 Gift Exchange</button>
-                <button class="nav-btn" data-section="games">🎮 Games</button>
-                <button class="nav-btn" data-section="share-christmas">📸 Share Christmas</button>
-                <button class="nav-btn" id="howBtn">❓ How</button>
-            </div>
+    <!-- Staggered Menu Navigation -->
+    <div class="staggered-menu-wrapper" id="staggeredMenuWrapper" data-position="right">
+        <div class="sm-prelayers" id="preLayers" aria-hidden="true">
+            <div class="sm-prelayer" style="background: var(--christmas-red);"></div>
+            <div class="sm-prelayer" style="background: var(--christmas-green);"></div>
         </div>
-    </nav>
+        <header class="staggered-menu-header">
+            <div class="sm-logo">
+                <span class="sm-logo-text">🎄 Christmas Magic</span>
+            </div>
+            <button class="sm-toggle" id="staggeredMenuToggle" aria-label="Open menu" aria-expanded="false" aria-controls="staggered-menu-panel" type="button">
+                <span class="sm-toggle-textWrap">
+                    <span class="sm-toggle-textInner" id="toggleTextInner">
+                        <span class="sm-toggle-line">Menu</span>
+                        <span class="sm-toggle-line">Close</span>
+                    </span>
+                </span>
+                <span class="sm-icon" id="menuIcon">
+                    <span class="sm-icon-line" id="plusH"></span>
+                    <span class="sm-icon-line sm-icon-line-v" id="plusV"></span>
+                </span>
+            </button>
+        </header>
+        <aside id="staggered-menu-panel" class="staggered-menu-panel" aria-hidden="true">
+            <div class="sm-panel-inner">
+                <ul class="sm-panel-list" role="list" data-numbering="true">
+                    <li class="sm-panel-itemWrap">
+                        <a class="sm-panel-item" href="#" data-section="home" aria-label="Go to home page" data-index="1">
+                            <span class="sm-panel-itemLabel">Home</span>
+                        </a>
+                    </li>
+                    <li class="sm-panel-itemWrap">
+                        <a class="sm-panel-item" href="#" data-section="card-maker" aria-label="Create Christmas cards" data-index="2">
+                            <span class="sm-panel-itemLabel">Card Maker</span>
+                        </a>
+                    </li>
+                    <li class="sm-panel-itemWrap">
+                        <a class="sm-panel-item" href="#" data-section="advent-calendar" aria-label="Open advent calendar" data-index="3">
+                            <span class="sm-panel-itemLabel">Advent Calendar</span>
+                        </a>
+                    </li>
+                    <li class="sm-panel-itemWrap">
+                        <a class="sm-panel-item" href="#" data-section="personality-quiz" aria-label="Take personality quiz" data-index="4">
+                            <span class="sm-panel-itemLabel">Quiz</span>
+                        </a>
+                    </li>
+                    <li class="sm-panel-itemWrap">
+                        <a class="sm-panel-item" href="#" data-section="sock-hanging" aria-label="Hang a sock" data-index="5">
+                            <span class="sm-panel-itemLabel">Hang Sock</span>
+                        </a>
+                    </li>
+                    <li class="sm-panel-itemWrap">
+                        <a class="sm-panel-item" href="#" data-section="gift-exchange" aria-label="Gift exchange generator" data-index="6">
+                            <span class="sm-panel-itemLabel">Gift Exchange</span>
+                        </a>
+                    </li>
+                    <li class="sm-panel-itemWrap">
+                        <a class="sm-panel-item" href="#" data-section="games" aria-label="Play games" data-index="7">
+                            <span class="sm-panel-itemLabel">Games</span>
+                        </a>
+                    </li>
+                    <li class="sm-panel-itemWrap">
+                        <a class="sm-panel-item" href="#" data-section="share-christmas" aria-label="Share your Christmas" data-index="8">
+                            <span class="sm-panel-itemLabel">Share Christmas</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="sm-socials" aria-label="Additional actions">
+                    <button class="sm-panel-item sm-panel-item-btn" id="howBtnStaggered" data-index="9">
+                        <span class="sm-panel-itemLabel">How</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </div>
     
 
     <!-- Card Maker Section -->
@@ -858,6 +916,8 @@ Schitt's Creek, PA 24216</textarea>
         </div>
     </div>
 
+    <!-- GSAP for StaggeredMenu animations - Load before script.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
