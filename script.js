@@ -152,6 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
         initSnowToggle();
         initShareModal();
         initDailyChallenges();
+        initShareChristmas();
+        initHowButton();
     } catch (error) {
         console.error('Initialization error:', error);
         showError('Failed to initialize. Please refresh the page.');
@@ -396,6 +398,7 @@ function checkDailyReset() {
     if (userStats.lastDate !== today) {
         userStats.cardsToday = 0;
         userStats.socksToday = 0;
+        userStats.christmasSharesToday = 0;
         userStats.lastDate = today;
         localStorage.setItem('userStats', JSON.stringify(userStats));
     }
@@ -414,6 +417,9 @@ function updatePageStats() {
         const sockToday = document.getElementById('sockToday');
         if (sockTotal) sockTotal.textContent = userStats.socksHung || 0;
         if (sockToday) sockToday.textContent = userStats.socksToday || 0;
+        
+        // Share Christmas page stats (handled by updateShareChristmasStats)
+        updateShareChristmasStats();
     } catch (error) {
         console.error('Stats display error:', error);
     }
@@ -430,6 +436,8 @@ function incrementStat(statName) {
             userStats.cardsToday = (userStats.cardsToday || 0) + 1;
         } else if (statName === 'socksHung') {
             userStats.socksToday = (userStats.socksToday || 0) + 1;
+        } else if (statName === 'christmasShares') {
+            userStats.christmasSharesToday = (userStats.christmasSharesToday || 0) + 1;
         }
         
         localStorage.setItem('userStats', JSON.stringify(userStats));
@@ -602,16 +610,42 @@ function initMusicPlayer() {
 // Navigation
 function initNavigation() {
     const navButtons = document.querySelectorAll('.nav-btn');
+    const homeBtn = document.getElementById('homeBtn');
+    const hero = document.getElementById('hero');
+    
+    // Home button handler
+    if (homeBtn) {
+        homeBtn.addEventListener('click', () => {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            
+            // Show hero section
+            if (hero) hero.style.display = 'block';
+            
+            // Remove active from all nav buttons
+            navButtons.forEach(b => b.classList.remove('active'));
+            homeBtn.classList.add('active');
+            
+            if (soundEnabled) playSound('click');
+        });
+    }
+    
+    // Other nav buttons
     navButtons.forEach(btn => {
         btn.addEventListener('click', () => {
+            // Skip "How" button and "Home" button - they have their own handlers
+            if (btn.id === 'howBtn' || btn.id === 'homeBtn') return;
+            
             const section = btn.dataset.section;
-            switchSection(section);
-            
-            navButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // Hide hero section
-            document.getElementById('hero').style.display = 'none';
+            if (section) {
+                switchSection(section);
+                
+                navButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Hide hero section
+                if (hero) hero.style.display = 'none';
+            }
         });
     });
 }
@@ -5500,83 +5534,9 @@ function enhanceAdventCalendar() {
     }
 }
 
-// Mobile Optimizations - Touch gestures and swipe
+// Mobile Optimizations - Better keyboard handling only
 function initMobileOptimizations() {
     try {
-        let touchStartX = 0;
-        let touchEndX = 0;
-        let touchStartY = 0;
-        let touchEndY = 0;
-        let pullToRefreshStartY = 0;
-        let isPulling = false;
-        
-        // Swipe navigation
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        });
-        
-        document.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            touchEndY = e.changedTouches[0].screenY;
-            handleSwipe();
-        });
-        
-        function handleSwipe() {
-            const swipeThreshold = 50;
-            const diffX = touchStartX - touchEndX;
-            const diffY = touchStartY - touchEndY;
-            
-            // Horizontal swipe for navigation
-            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
-                const sections = ['card-maker', 'advent-calendar', 'personality-quiz', 'sock-hanging', 'gift-exchange', 'games'];
-                const currentIndex = sections.indexOf(currentSection);
-                
-                if (diffX > 0 && currentIndex < sections.length - 1) {
-                    // Swipe left - next section
-                    switchSection(sections[currentIndex + 1]);
-                } else if (diffX < 0 && currentIndex > 0) {
-                    // Swipe right - previous section
-                    switchSection(sections[currentIndex - 1]);
-                }
-            }
-        }
-        
-        // Pull-to-refresh for sock feed
-        const sockFeed = document.getElementById('sockFeed');
-        if (sockFeed) {
-            sockFeed.addEventListener('touchstart', (e) => {
-                if (sockFeed.scrollTop === 0) {
-                    pullToRefreshStartY = e.touches[0].clientY;
-                    isPulling = true;
-                }
-            });
-            
-            sockFeed.addEventListener('touchmove', (e) => {
-                if (isPulling && sockFeed.scrollTop === 0) {
-                    const currentY = e.touches[0].clientY;
-                    const pullDistance = currentY - pullToRefreshStartY;
-                    
-                    if (pullDistance > 0 && pullDistance < 100) {
-                        sockFeed.style.transform = `translateY(${pullDistance}px)`;
-                    }
-                }
-            });
-            
-            sockFeed.addEventListener('touchend', () => {
-                if (isPulling) {
-                    const pullDistance = parseInt(sockFeed.style.transform.replace('translateY(', '').replace('px)', '')) || 0;
-                    if (pullDistance > 50) {
-                        // Refresh feed
-                        renderFeed();
-                        showSuccess('Feed refreshed!');
-                    }
-                    sockFeed.style.transform = '';
-                    isPulling = false;
-                }
-            });
-        }
-        
         // Better mobile keyboard handling
         const textInputs = document.querySelectorAll('input[type="text"], textarea');
         textInputs.forEach(input => {
@@ -5590,6 +5550,400 @@ function initMobileOptimizations() {
     } catch (error) {
         console.error('Mobile optimization error:', error);
     }
+}
+
+// Share Your Christmas
+let christmasShares = JSON.parse(localStorage.getItem('christmasShares') || '[]');
+
+function initShareChristmas() {
+    const form = document.getElementById('shareChristmasForm');
+    const imageInput = document.getElementById('christmasImage');
+    const imageBtn = document.getElementById('christmasImageBtn');
+    const imagePlaceholder = document.getElementById('christmasImagePlaceholder');
+    const imagePreview = document.getElementById('christmasImagePreview');
+    const imagePreviewImg = document.getElementById('christmasImagePreviewImg');
+    const removeImageBtn = document.getElementById('removeChristmasImageBtn');
+    const messageInput = document.getElementById('christmasMessage');
+    const messageCounter = document.getElementById('christmasMessageCounter');
+    const locationInput = document.getElementById('christmasLocation');
+    const locationStatus = document.getElementById('locationStatus');
+    const getLocationBtn = document.getElementById('getCurrentLocationBtn');
+    
+    // Load existing shares
+    loadChristmasShares();
+    updateShareChristmasStats();
+    
+    // Image upload
+    if (imageBtn) {
+        imageBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+    }
+    
+    if (imageInput) {
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleChristmasImageFile(file);
+            }
+        });
+    }
+    
+    // Drag and drop
+    const uploadArea = document.getElementById('christmasImageUploadArea');
+    if (uploadArea) {
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleChristmasImageFile(file);
+            }
+        });
+    }
+    
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', () => {
+            imageInput.value = '';
+            imagePlaceholder.style.display = 'flex';
+            imagePreview.style.display = 'none';
+        });
+    }
+    
+    // Message counter
+    if (messageInput && messageCounter) {
+        messageInput.addEventListener('input', () => {
+            const length = messageInput.value.length;
+            messageCounter.textContent = `${length} / 200`;
+            if (length > 200) {
+                messageInput.value = messageInput.value.substring(0, 200);
+                messageCounter.textContent = '200 / 200';
+            }
+        });
+    }
+    
+    // Get current location (required)
+    if (getLocationBtn) {
+        getLocationBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                if (locationStatus) {
+                    locationStatus.textContent = '❌ Geolocation not supported in this browser.';
+                    locationStatus.style.color = 'var(--christmas-red)';
+                }
+                showError('Geolocation not supported in this browser.');
+                return;
+            }
+            
+            // Disable button during request
+            getLocationBtn.disabled = true;
+            getLocationBtn.style.opacity = '0.6';
+            getLocationBtn.style.cursor = 'not-allowed';
+            
+            if (locationStatus) {
+                locationStatus.textContent = 'Getting location...';
+                locationStatus.style.color = 'var(--christmas-gold)';
+            }
+            
+            // Set timeout for geolocation request (backup timeout)
+            let timeoutCleared = false;
+            const timeoutId = setTimeout(() => {
+                if (!timeoutCleared) {
+                    timeoutCleared = true;
+                    getLocationBtn.disabled = false;
+                    getLocationBtn.style.opacity = '1';
+                    getLocationBtn.style.cursor = 'pointer';
+                    
+                    if (locationStatus) {
+                        locationStatus.textContent = '⏱️ Location request timed out. Please try again.';
+                        locationStatus.style.color = 'var(--christmas-red)';
+                    }
+                    showError('Location request timed out. Please try again.');
+                }
+            }, 15000); // 15 second backup timeout
+            
+            const geoOptions = {
+                enableHighAccuracy: false,
+                timeout: 10000, // 10 second timeout
+                maximumAge: 60000 // Accept cached location up to 1 minute old
+            };
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    if (timeoutCleared) return; // Already handled by timeout
+                    clearTimeout(timeoutId);
+                    timeoutCleared = true;
+                    
+                    getLocationBtn.disabled = false;
+                    getLocationBtn.style.opacity = '1';
+                    getLocationBtn.style.cursor = 'pointer';
+                    
+                    try {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        console.log('Location received:', lat, lng);
+                        
+                        const country = getCountryFromLocation(lat, lng);
+                        const city = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🌍/g, '').trim();
+                        const locationText = `${city}, ${country}`;
+                        locationInput.value = locationText;
+                        
+                        if (locationStatus) {
+                            locationStatus.textContent = `📍 ${locationText}`;
+                            locationStatus.style.color = 'var(--christmas-gold)';
+                        }
+                        showSuccess('Location detected!');
+                        if (soundEnabled) playSound('success');
+                    } catch (error) {
+                        console.error('Location processing error:', error);
+                        if (locationStatus) {
+                            locationStatus.textContent = '❌ Error processing location. Please try again.';
+                            locationStatus.style.color = 'var(--christmas-red)';
+                        }
+                        showError('Error processing location. Please try again.');
+                    }
+                },
+                (error) => {
+                    if (timeoutCleared) return; // Already handled by timeout
+                    clearTimeout(timeoutId);
+                    timeoutCleared = true;
+                    
+                    getLocationBtn.disabled = false;
+                    getLocationBtn.style.opacity = '1';
+                    getLocationBtn.style.cursor = 'pointer';
+                    
+                    console.error('Geolocation error:', error);
+                    
+                    let errorMessage = 'Could not get location. ';
+                    if (error.code === 1) {
+                        errorMessage = 'Location access denied. Please allow location access in your browser settings and try again.';
+                    } else if (error.code === 2) {
+                        errorMessage = 'Location unavailable. Please check your device settings.';
+                    } else if (error.code === 3) {
+                        errorMessage = 'Location request timed out. Please try again.';
+                    } else {
+                        errorMessage = `Could not get location (Error ${error.code}). Please try again.`;
+                    }
+                    
+                    if (locationStatus) {
+                        locationStatus.textContent = `❌ ${errorMessage}`;
+                        locationStatus.style.color = 'var(--christmas-red)';
+                    }
+                    showError(errorMessage);
+                },
+                geoOptions
+            );
+        });
+    }
+    
+    // Form submit
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitChristmasShare();
+        });
+    }
+}
+
+function handleChristmasImageFile(file) {
+    if (!file.type.startsWith('image/')) {
+        showError('Please select an image file.');
+        return;
+    }
+    
+    if (file.size > 5 * 1024 * 1024) {
+        showError('Image size should be less than 5MB.');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const imagePreview = document.getElementById('christmasImagePreview');
+        const imagePreviewImg = document.getElementById('christmasImagePreviewImg');
+        const imagePlaceholder = document.getElementById('christmasImagePlaceholder');
+        
+        if (imagePreviewImg) {
+            imagePreviewImg.src = e.target.result;
+        }
+        if (imagePreview) {
+            imagePreview.style.display = 'block';
+        }
+        if (imagePlaceholder) {
+            imagePlaceholder.style.display = 'none';
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function submitChristmasShare() {
+    const imageInput = document.getElementById('christmasImage');
+    const messageInput = document.getElementById('christmasMessage');
+    const locationInput = document.getElementById('christmasLocation');
+    const imagePreviewImg = document.getElementById('christmasImagePreviewImg');
+    
+    if (!imageInput.files[0] && !imagePreviewImg.src) {
+        showError('Please upload an image.');
+        return;
+    }
+    
+    // Location is required
+    if (!locationInput || !locationInput.value || locationInput.value.trim() === '') {
+        showError('Please get your current location first. Location is required.');
+        const getLocationBtn = document.getElementById('getCurrentLocationBtn');
+        if (getLocationBtn) {
+            getLocationBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+    }
+    
+    const share = {
+        id: Date.now(),
+        image: imagePreviewImg ? imagePreviewImg.src : '',
+        message: messageInput ? messageInput.value.trim() : '',
+        location: locationInput ? locationInput.value.trim() : '',
+        timestamp: new Date().toISOString(),
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString()
+    };
+    
+    // Add to beginning of array (most recent first)
+    christmasShares.unshift(share);
+    
+    // Keep only last 100 shares
+    if (christmasShares.length > 100) {
+        christmasShares = christmasShares.slice(0, 100);
+    }
+    
+    localStorage.setItem('christmasShares', JSON.stringify(christmasShares));
+    
+    // Reset form
+    imageInput.value = '';
+    document.getElementById('christmasImagePlaceholder').style.display = 'flex';
+    document.getElementById('christmasImagePreview').style.display = 'none';
+    if (messageInput) messageInput.value = '';
+    if (locationInput) locationInput.value = '';
+    document.getElementById('christmasMessageCounter').textContent = '0 / 200';
+    
+    // Reset location status
+    const locationStatus = document.getElementById('locationStatus');
+    if (locationStatus) {
+        locationStatus.textContent = 'Click button below to get your location';
+        locationStatus.style.color = 'rgba(255, 255, 255, 0.7)';
+    }
+    
+    // Reset location status - user needs to click button again
+    const getLocationBtn = document.getElementById('getCurrentLocationBtn');
+    // Don't auto-click - browsers require user interaction for geolocation
+    
+    // Reload feed
+    loadChristmasShares();
+    updateShareChristmasStats();
+    if (typeof incrementStat === 'function') {
+        incrementStat('christmasShares');
+    }
+    
+    showSuccess('Your Christmas moment has been shared! 🎄');
+    if (soundEnabled) playSound('success');
+}
+
+function loadChristmasShares() {
+    const feed = document.getElementById('shareChristmasFeed');
+    if (!feed) return;
+    
+    feed.innerHTML = '';
+    
+    if (christmasShares.length === 0) {
+        feed.innerHTML = '<p class="empty-feed-message">No shares yet. Be the first to share your Christmas moment! 🎄</p>';
+        return;
+    }
+    
+    christmasShares.forEach(share => {
+        const item = document.createElement('div');
+        item.className = 'share-christmas-item';
+        item.innerHTML = `
+            <img src="${share.image}" alt="Christmas share" class="share-christmas-item-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ctext y=\'.9em\' font-size=\'90\'%3E🎄%3C/text%3E%3C/svg%3E'">
+            <div class="share-christmas-item-content">
+                ${share.message ? `<p class="share-christmas-item-message">${share.message}</p>` : ''}
+                <div class="share-christmas-item-footer">
+                    <div class="share-christmas-item-location">
+                        ${share.location ? `<span>📍 ${share.location}</span>` : '<span>🌍 Unknown Location</span>'}
+                    </div>
+                    <div>${share.time}</div>
+                </div>
+            </div>
+        `;
+        feed.appendChild(item);
+    });
+}
+
+function updateShareChristmasStats() {
+    const totalShares = document.getElementById('totalShares');
+    const shareChristmasTotal = document.getElementById('shareChristmasTotal');
+    const shareChristmasToday = document.getElementById('shareChristmasToday');
+    
+    const today = new Date().toLocaleDateString();
+    const todayShares = christmasShares.filter(share => share.date === today).length;
+    
+    if (totalShares) totalShares.textContent = christmasShares.length;
+    if (shareChristmasTotal) shareChristmasTotal.textContent = userStats.christmasShares || 0;
+    if (shareChristmasToday) shareChristmasToday.textContent = userStats.christmasSharesToday || 0;
+}
+
+// How Button
+function initHowButton() {
+    const howBtn = document.getElementById('howBtn');
+    if (howBtn) {
+        howBtn.addEventListener('click', () => {
+            showHowModal();
+            if (soundEnabled) playSound('click');
+        });
+    }
+}
+
+function showHowModal() {
+    const modal = document.getElementById('shareModal');
+    const modalBody = document.getElementById('shareModalBody');
+    
+    if (!modal || !modalBody) return;
+    
+    modalBody.innerHTML = `
+        <h3>❓ How to Use Christmas Magic</h3>
+        <div style="text-align: left; margin-top: 1.5rem; line-height: 1.8;">
+            <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">✉️ Card Maker</h4>
+            <p>Create personalized Christmas cards with custom text, colors, fonts, and decorations. Upload images and share your creations!</p>
+            
+            <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">🎁 Advent Calendar</h4>
+            <p>Open a door each day from December 1st to 25th to discover daily surprises and Christmas content!</p>
+            
+            <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">🎭 Personality Quiz</h4>
+            <p>Answer fun questions to discover which Christmas character you are - Santa, Elf, Snowman, or Reindeer!</p>
+            
+            <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">🧦 Hang Sock</h4>
+            <p>Hang a virtual sock on the map with your location. See socks from around the world and compete in country rankings!</p>
+            
+            <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">🎁 Gift Exchange</h4>
+            <p>Generate Secret Santa pairs for your gift exchange. Add participants manually or use auto-generation!</p>
+            
+            <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">🎮 Games</h4>
+            <p>Play Christmas-themed games: Trivia, Memory, Word Search, and Wordle. Challenge yourself with different difficulty levels!</p>
+            
+            <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">📸 Share Christmas</h4>
+            <p>Upload your Christmas photos with a message and location. Share your holiday moments with the world!</p>
+        </div>
+        <div style="margin-top: 1.5rem;">
+            <button class="action-btn secondary" onclick="document.getElementById('shareModal').style.display='none'">Close</button>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
 }
 
 // Snow Animation

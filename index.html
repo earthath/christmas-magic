@@ -21,9 +21,6 @@
     <!-- Leaflet and html2canvas loaded dynamically when needed -->
 </head>
 <body>
-    <!-- Skip to Main Content Link -->
-    <a href="#main-content" class="skip-to-main">Skip to main content</a>
-    
     <div class="page-wrapper" id="main-content">
     <!-- Animated Snow Background -->
     <div class="snow-container" id="snowContainer"></div>
@@ -136,12 +133,15 @@
         <div class="nav-container">
             <h1 class="logo">🎄 Christmas Magic</h1>
             <div class="nav-buttons">
+                <button class="nav-btn" id="homeBtn">🏠 Home</button>
                 <button class="nav-btn active" data-section="card-maker">✉️ Card Maker</button>
                 <button class="nav-btn" data-section="advent-calendar">🎁 Advent Calendar</button>
                 <button class="nav-btn" data-section="personality-quiz">🎭 Quiz</button>
                 <button class="nav-btn" data-section="sock-hanging">🧦 Hang Sock</button>
                 <button class="nav-btn" data-section="gift-exchange">🎁 Gift Exchange</button>
                 <button class="nav-btn" data-section="games">🎮 Games</button>
+                <button class="nav-btn" data-section="share-christmas">📸 Share Christmas</button>
+                <button class="nav-btn" id="howBtn">❓ How</button>
             </div>
         </div>
     </nav>
@@ -405,13 +405,6 @@ Schitt's Creek, PA 24216</textarea>
                 </div>
             </div>
             
-            <!-- Share Modal -->
-            <div class="modal" id="shareModal" style="display: none;">
-                <div class="modal-content">
-                    <button class="modal-close" id="closeShareModal">&times;</button>
-                    <div class="modal-body" id="shareModalBody"></div>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -771,6 +764,82 @@ Schitt's Creek, PA 24216</textarea>
             </div>
         </div>
     </section>
+
+    <!-- Share Your Christmas Section -->
+    <section id="share-christmas" class="section">
+        <div class="container">
+            <h2 class="section-title">📸 Share Your Christmas</h2>
+            <p class="section-subtitle">Upload your Christmas photos and share your holiday moments with the world!</p>
+            
+            <div class="share-christmas-wrapper">
+                <!-- Upload Form -->
+                <div class="share-christmas-form-container">
+                    <div class="share-christmas-header">
+                        <h3>Share Your Moment</h3>
+                    </div>
+                    <form class="share-christmas-form" id="shareChristmasForm">
+                        <div class="form-group">
+                            <label for="christmasImage">📷 Upload Photo</label>
+                            <div class="image-upload-area" id="christmasImageUploadArea">
+                                <input type="file" id="christmasImage" accept="image/*" style="display: none;">
+                                <div class="upload-placeholder" id="christmasImagePlaceholder">
+                                    <span class="upload-icon">📷</span>
+                                    <p>Click or drag image here</p>
+                                    <button type="button" class="upload-btn" id="christmasImageBtn">Choose Image</button>
+                                </div>
+                                <div class="image-preview-container" id="christmasImagePreview" style="display: none;">
+                                    <img id="christmasImagePreviewImg" class="image-preview" alt="Preview">
+                                    <button type="button" class="remove-image-btn" id="removeChristmasImageBtn">✕ Remove</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="christmasMessage">💬 Message (Optional)</label>
+                            <textarea id="christmasMessage" class="share-christmas-message" placeholder="Share your Christmas story..."></textarea>
+                            <div class="char-counter" id="christmasMessageCounter">0 / 200</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="christmasLocation">📍 Location <span style="color: var(--christmas-red);">*</span></label>
+                            <div id="locationStatus" class="location-status">Click button below to get your location</div>
+                            <button type="button" class="action-btn secondary" id="getCurrentLocationBtn">📍 Get Current Location</button>
+                            <input type="hidden" id="christmasLocation" class="share-christmas-location">
+                        </div>
+                        
+                        <button type="submit" class="action-btn primary" id="submitChristmasShare">
+                            ✨ Share Your Christmas
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Feed Display -->
+                <div class="share-christmas-feed-container">
+                    <div class="share-christmas-header">
+                        <h3>🎄 Christmas Moments</h3>
+                        <div class="share-christmas-stats" id="shareChristmasStats">
+                            <span id="totalShares">0</span> shares
+                        </div>
+                    </div>
+                    <div class="share-christmas-feed" id="shareChristmasFeed">
+                        <p class="empty-feed-message">No shares yet. Be the first to share your Christmas moment! 🎄</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Page Stats -->
+            <div class="page-stats" id="shareChristmasPageStats">
+                <div class="page-stat-item">
+                    <div class="page-stat-number" id="shareChristmasTotal">0</div>
+                    <div class="page-stat-label">Total Shares</div>
+                </div>
+                <div class="page-stat-item">
+                    <div class="page-stat-number" id="shareChristmasToday">0</div>
+                    <div class="page-stat-label">Today</div>
+                </div>
+            </div>
+        </div>
+    </section>
     </div>
     
     <!-- Footer -->
@@ -780,6 +849,14 @@ Schitt's Creek, PA 24216</textarea>
             <a href="mailto:dkxlvm22@gmail.com" class="footer-email">dkxlvm22@gmail.com</a>
         </div>
     </footer>
+
+    <!-- Share Modal - Global (outside all sections) -->
+    <div class="modal" id="shareModal" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close" id="closeShareModal">&times;</button>
+            <div class="modal-body" id="shareModalBody"></div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
