@@ -480,6 +480,9 @@ function showShareOptions(gameType, shareText, blob, gameTitle) {
         <h3>Share Your Result</h3>
         <p style="margin: 1rem 0; color: rgba(255,255,255,0.7);">${shareText}</p>
         <div class="share-platforms">
+            <button class="share-platform-btn instagram-story-btn" id="instagramStoryBtn" style="background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); border-color: #bc1888;">
+                📸 Instagram Story
+            </button>
             <button class="share-platform-btn" data-platform="twitter">🐦 Twitter</button>
             <button class="share-platform-btn" data-platform="facebook">📘 Facebook</button>
             <button class="share-platform-btn" data-platform="whatsapp">💬 WhatsApp</button>
@@ -493,8 +496,17 @@ function showShareOptions(gameType, shareText, blob, gameTitle) {
     
     modal.style.display = 'flex';
     
+    // Instagram Story button (special handling)
+    const instagramBtn = modalBody.querySelector('#instagramStoryBtn');
+    if (instagramBtn && blob) {
+        instagramBtn.addEventListener('click', () => {
+            shareToInstagramStory(blob, shareText);
+            if (soundEnabled) playSound('click');
+        });
+    }
+    
     // Platform buttons
-    modalBody.querySelectorAll('.share-platform-btn').forEach(btn => {
+    modalBody.querySelectorAll('.share-platform-btn:not(#instagramStoryBtn)').forEach(btn => {
         btn.addEventListener('click', () => {
             const platform = btn.dataset.platform;
             shareToPlatform(platform, shareText);
@@ -1275,27 +1287,11 @@ function initCardMaker() {
                                 return;
                             }
                             
-                            const url = URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.download = 'christmas-card.png';
-                            link.href = url;
-                            link.click();
+                            // Show share options modal with Instagram Story
+                            const shareText = 'Check out my Christmas card! 🎄';
+                            showShareOptions('card', shareText, blob, 'My Christmas Card');
                             
-                            // Native share
-                            if (navigator.share) {
-                                setTimeout(() => {
-                                    blob.arrayBuffer().then(buffer => {
-                                        const file = new File([buffer], 'christmas-card.png', { type: 'image/png' });
-                                        navigator.share({
-                                            title: 'My Christmas Card',
-                                            text: 'Check out my Christmas card!',
-                                            files: [file]
-                                        }).catch(() => {});
-                                    }).catch(() => {});
-                                }, 100);
-                            }
-                            
-                            showSuccess('Card image saved!');
+                            showSuccess('Card image ready to share!');
                         }, 'image/png', 1.0);
                     }).catch(error => {
                         // Restore original styles on error
@@ -3038,34 +3034,16 @@ function shareQuizResult(character, result) {
     });
     ctx.fillText(line, canvas.width / 2, y);
     
-        // Convert to image and download/share
+        // Convert to image and show share options
         canvas.toBlob(blob => {
             if (!blob) {
                 showError('Failed to generate image');
                 return;
             }
             
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `christmas-quiz-result-${character || 'unknown'}.png`;
-            link.href = url;
-            link.click();
-            
-            // Also provide share options
-            if (navigator.share) {
-                blob.arrayBuffer().then(buffer => {
-                    const file = new File([buffer], `christmas-quiz-${character || 'unknown'}.png`, { type: 'image/png' });
-                    navigator.share({
-                        title: result.title || 'My Christmas Character',
-                        text: result.description || 'Check out my Christmas character!',
-                        files: [file]
-                    }).catch(() => {
-                        // Share failed, download already happened
-                    });
-                }).catch(() => {
-                    // ArrayBuffer conversion failed
-                });
-            }
+            // Show share options modal with Instagram Story
+            const shareText = `${result.title || 'My Christmas Character'}\n\n${result.description || 'Check out my Christmas character!'} 🎄`;
+            showShareOptions('quiz', shareText, blob, result.title || 'My Christmas Character');
         }, 'image/png');
     } catch (error) {
         console.error('Share quiz result error:', error);
@@ -3654,36 +3632,18 @@ function shareSockImage(sock) {
         ctx.font = '32px Arial, sans-serif';
         ctx.fillText('Christmas Magic', canvas.width / 2, canvas.height - 80);
         
-        // Convert to image and download/share
+        // Convert to image and show share options
         canvas.toBlob(blob => {
             if (!blob) {
                 showError('Failed to generate image');
                 return;
             }
             
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `sock-${(sock.city || 'location').replace(/\s+/g, '-')}-${Date.now()}.png`;
-            link.href = url;
-            link.click();
-            
-            // Also provide share options
-            setTimeout(() => {
-                if (navigator.share) {
-                    blob.arrayBuffer().then(buffer => {
-                        const file = new File([buffer], `sock-${(sock.city || 'location').replace(/\s+/g, '-')}.png`, { type: 'image/png' });
-                        navigator.share({
-                            title: `I hung a sock in ${sock.city || 'the world'}! 🧦`,
-                            text: sock.message ? `${sock.message}\n\n📍 ${sock.city || 'Unknown'}, ${sock.country || 'World'}` : `Check out my Christmas sock in ${sock.city || 'the world'}, ${sock.country || 'World'}! 🎄`,
-                            files: [file]
-                        }).catch(() => {
-                            // Share failed, download already happened
-                        });
-                    }).catch(() => {
-                        // ArrayBuffer conversion failed
-                    });
-                }
-            }, 100);
+            // Show share options modal with Instagram Story
+            const shareText = sock.message 
+                ? `${sock.message}\n\n📍 ${sock.city || 'Unknown'}, ${sock.country || 'World'}`
+                : `I hung a sock in ${sock.city || 'the world'}, ${sock.country || 'World'}! 🧦🎄`;
+            showShareOptions('sock', shareText, blob, 'I Hung a Sock!');
         }, 'image/png');
     } catch (error) {
         console.error('Share sock image error:', error);
@@ -4893,7 +4853,7 @@ function clearSelection(gridDiv) {
 }
 
 // Share to Specific Platforms
-function shareToPlatform(platform, text, url = window.location.href) {
+function shareToPlatform(platform, text, url = window.location.href, blob = null) {
     const encodedText = encodeURIComponent(text);
     const encodedUrl = encodeURIComponent(url);
     
@@ -4908,6 +4868,79 @@ function shareToPlatform(platform, text, url = window.location.href) {
     if (platforms[platform]) {
         window.open(platforms[platform], '_blank', 'width=600,height=400');
     }
+}
+
+// Share to Instagram Stories (Mobile)
+function shareToInstagramStory(blob, text = '') {
+    if (!blob) {
+        showError('No image to share');
+        return;
+    }
+    
+    // Check if on mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile && navigator.share) {
+        // Use native share API - Instagram will appear as an option on mobile
+        blob.arrayBuffer().then(buffer => {
+            const file = new File([buffer], `christmas-story-${Date.now()}.png`, { type: 'image/png' });
+            navigator.share({
+                title: 'My Christmas Result',
+                text: text || 'Check out my Christmas result! 🎄',
+                files: [file]
+            }).then(() => {
+                showSuccess('Shared to Instagram!');
+                if (soundEnabled) playSound('success');
+            }).catch((error) => {
+                // If user cancels or share fails, try Instagram deep link
+                if (error.name !== 'AbortError') {
+                    openInstagramApp(blob);
+                }
+            });
+        }).catch(() => {
+            openInstagramApp(blob);
+        });
+    } else {
+        // Desktop or no native share - try to open Instagram app or web
+        openInstagramApp(blob);
+    }
+}
+
+// Open Instagram App (fallback)
+function openInstagramApp(blob) {
+    // Create a download link first
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `christmas-story-${Date.now()}.png`;
+    link.href = url;
+    link.click();
+    
+    // Try to open Instagram app
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
+    if (isIOS) {
+        // iOS: Try to open Instagram Stories
+        window.location.href = 'instagram-stories://share';
+        setTimeout(() => {
+            // Fallback to Instagram app
+            window.location.href = 'instagram://';
+        }, 500);
+    } else if (isAndroid) {
+        // Android: Try to open Instagram
+        window.location.href = 'intent://share#Intent;package=com.instagram.android;scheme=https;end';
+        setTimeout(() => {
+            // Fallback to web Instagram
+            window.open('https://www.instagram.com/', '_blank');
+        }, 500);
+    } else {
+        // Desktop: Open Instagram web
+        window.open('https://www.instagram.com/', '_blank');
+        showSuccess('Image downloaded! Open Instagram and add it to your story.');
+    }
+    
+    // Clean up
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // Share Game Results
