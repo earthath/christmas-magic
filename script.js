@@ -3657,12 +3657,14 @@ function initSockHanging() {
         sockData.unshift(sockEntry);
         if (sockData.length > 50) sockData.pop(); // Keep last 50
 
-        // Update stats
-        sockStats.total++;
+        // Update stats (only when user actually hangs a sock)
+        // Don't increment total from localStorage - use actual count
         incrementStat('socksHung');
         completeDailyChallenge('sock');
         sockStats.displayed = sockData.length;
         sockStats.hanging = Math.min(3, sockStats.hanging + 1);
+        // Update total to match displayed (for user's personal count)
+        sockStats.total = sockData.length;
 
         // Update country rankings
         const countryCode = location.country;
@@ -3719,51 +3721,60 @@ function initSockHanging() {
         });
     }
 
-    // Simulate real-time updates every 5 seconds
-    setInterval(() => {
-        // Occasionally add random socks
-        if (Math.random() > 0.7) {
-            const city = cities[Math.floor(Math.random() * cities.length)];
-            const sockEmojis = ['🧦', '🧤', '🧥', '🎄', '⭐', '🎁'];
-            const sockEntry = {
-                id: Date.now(),
-                emoji: sockEmojis[Math.floor(Math.random() * sockEmojis.length)],
-                message: null,
-                city: city.name,
-                country: city.country,
-                lat: city.lat + (Math.random() - 0.5) * 0.01,
-                lng: city.lng + (Math.random() - 0.5) * 0.01,
-                timestamp: new Date()
-            };
-
-            sockData.unshift(sockEntry);
-            if (sockData.length > 50) sockData.pop();
-
-            const countryCode = city.country;
-            countryRankings[countryCode] = (countryRankings[countryCode] || 0) + 1;
-
-            sockStats.total++;
+    // Real-time updates from Firebase (if available)
+    // Auto-generation removed - now using real user submissions via Firebase only
+    // No automatic sock creation - only real user submissions
+    if (isFirebaseAvailable()) {
+        // Subscribe to real-time updates from Firebase (read-only, no auto-creation)
+        const unsubscribe = subscribeToGlobalSocks((globalSocks) => {
+            // Only update UI with existing socks from Firebase - do NOT create new ones
+            // This is READ-ONLY - we're just syncing what's in Firebase
+            sockData = [...globalSocks];
+            if (sockData.length > 50) sockData = sockData.slice(0, 50);
+            
+            // DO NOT increment sockStats.total here - this is just syncing existing data
+            // Only update displayed count
             sockStats.displayed = sockData.length;
-
+            
+            // Save to localStorage (read-only sync from Firebase)
             localStorage.setItem('sockData', JSON.stringify(sockData));
             localStorage.setItem('sockStats', JSON.stringify(sockStats));
-            localStorage.setItem('countryRankings', JSON.stringify(countryRankings));
-
-            // Save to Firebase (global sharing)
-            saveSockToFirebase(sockEntry);
-
+            
+            // Update UI
             updateStats();
-            addSockToMap(sockEntry);
+            loadSocksOnMap();
             renderFeed();
             renderRankings();
+        });
+        
+        // Store unsubscribe function for cleanup if needed
+        if (unsubscribe) {
+            window.sockUnsubscribe = unsubscribe;
         }
-    }, 5000);
+    }
 }
 
 function updateStats() {
-    document.getElementById('totalSocks').textContent = sockStats.total || 0;
-    document.getElementById('currentDisplay').textContent = sockStats.displayed || 0;
-    document.getElementById('hangingNow').textContent = sockStats.hanging || 0;
+    // Show actual displayed socks count, not localStorage total
+    const actualDisplayed = sockData.length;
+    const totalSocksEl = document.getElementById('totalSocks');
+    const currentDisplayEl = document.getElementById('currentDisplay');
+    const hangingNowEl = document.getElementById('hangingNow');
+    
+    if (totalSocksEl) {
+        // Show actual count from sockData (what's actually displayed)
+        totalSocksEl.textContent = actualDisplayed;
+    }
+    if (currentDisplayEl) {
+        currentDisplayEl.textContent = actualDisplayed;
+    }
+    if (hangingNowEl) {
+        hangingNowEl.textContent = sockStats.hanging || 0;
+    }
+    
+    // Update localStorage stats to match reality
+    sockStats.displayed = actualDisplayed;
+    localStorage.setItem('sockStats', JSON.stringify(sockStats));
 }
 
 function initMap() {
