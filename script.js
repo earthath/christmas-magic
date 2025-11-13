@@ -1092,8 +1092,7 @@ function initCardMaker() {
     let decorationCount = 0;
     let cardHistory = [];
     let historyIndex = -1;
-    let currentFrame = 'simple';
-    let currentFrameColor = '#FFB81C';
+    // Frame variables removed - no frames in card maker
     let imagePosition = 'center';
     let imageOpacity = 100;
     let imageSize = 100;
@@ -1270,8 +1269,8 @@ function initCardMaker() {
     if (cardBorder) {
         cardBorder.addEventListener('change', (e) => {
             if (e.target.checked) {
-                cardPreview.style.border = '3px solid rgba(255, 184, 28, 0.6)';
-                cardPreview.style.boxShadow = '0 0 30px rgba(255, 184, 28, 0.3)';
+                cardPreview.style.border = '3px solid rgba(255, 255, 255, 0.3)';
+                cardPreview.style.boxShadow = 'none';
             } else {
                 cardPreview.style.border = 'none';
                 cardPreview.style.boxShadow = 'none';
@@ -1478,29 +1477,7 @@ function initCardMaker() {
                                 }
                             }
                             
-                            // Handle frame overlay - remove outer shadows, keep only inset and border
-                            const clonedFrame = clonedDoc.querySelector('#cardFrameOverlay');
-                            if (clonedFrame) {
-                                // For postcard, hide frame overlay completely
-                                if (currentTemplate === 'postcard') {
-                                    clonedFrame.style.display = 'none';
-                                } else {
-                                    // Get computed styles
-                                    const computedStyle = clonedDoc.defaultView.getComputedStyle(clonedFrame);
-                                    const boxShadow = computedStyle.boxShadow;
-                                    
-                                    // Remove outer shadows (those starting with "0 0"), keep only inset shadows
-                                    if (boxShadow && boxShadow !== 'none') {
-                                        const shadows = boxShadow.split(',').map(s => s.trim());
-                                        const insetShadows = shadows.filter(s => s.includes('inset'));
-                                        if (insetShadows.length > 0) {
-                                            clonedFrame.style.boxShadow = insetShadows.join(', ');
-                                        } else {
-                                            clonedFrame.style.boxShadow = 'none';
-                                        }
-                                    }
-                                }
-                            }
+                            // Frame overlay removed - no frames in card maker
                             
                             // Fix textarea in cloned document - convert to div for better rendering
                             const clonedTextarea = clonedDoc.querySelector('#cardMessage');
@@ -1767,29 +1744,7 @@ function initCardMaker() {
                                 }
                             }
                             
-                            // Handle frame overlay - remove outer shadows, keep only inset and border
-                            const clonedFrame = clonedDoc.querySelector('#cardFrameOverlay');
-                            if (clonedFrame) {
-                                // For postcard, hide frame overlay completely
-                                if (currentTemplate === 'postcard') {
-                                    clonedFrame.style.display = 'none';
-                                } else {
-                                    // Get computed styles
-                                    const computedStyle = clonedDoc.defaultView.getComputedStyle(clonedFrame);
-                                    const boxShadow = computedStyle.boxShadow;
-                                    
-                                    // Remove outer shadows (those starting with "0 0"), keep only inset shadows
-                                    if (boxShadow && boxShadow !== 'none') {
-                                        const shadows = boxShadow.split(',').map(s => s.trim());
-                                        const insetShadows = shadows.filter(s => s.includes('inset'));
-                                        if (insetShadows.length > 0) {
-                                            clonedFrame.style.boxShadow = insetShadows.join(', ');
-                                        } else {
-                                            clonedFrame.style.boxShadow = 'none';
-                                        }
-                                    }
-                                }
-                            }
+                            // Frame overlay removed - no frames in card maker
                             
                             // Fix textarea in cloned document - convert to div for better rendering
                             const clonedTextarea = clonedDoc.querySelector('#cardMessage');
@@ -2325,42 +2280,7 @@ function initCardMaker() {
         container.style.alignItems = pos.alignItems;
     }
     
-    // Frame Selection
-    const cardFrameOverlay = document.getElementById('cardFrameOverlay');
-    document.querySelectorAll('.frame-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentFrame = btn.dataset.frame;
-            document.querySelectorAll('.frame-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateFrame();
-            saveCardState();
-            if (soundEnabled) playSound('click');
-        });
-    });
-    
-    // Frame Color
-    document.querySelectorAll('[data-framecolor]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentFrameColor = btn.dataset.framecolor;
-            document.querySelectorAll('[data-framecolor]').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateFrame();
-            saveCardState();
-            if (soundEnabled) playSound('click');
-        });
-    });
-    
-    function updateFrame() {
-        if (!cardFrameOverlay) return;
-        
-        cardFrameOverlay.className = 'card-frame-overlay';
-        if (currentFrame !== 'none') {
-            cardFrameOverlay.classList.add(`frame-${currentFrame}`);
-            cardFrameOverlay.style.setProperty('--frame-color', currentFrameColor);
-        } else {
-            cardFrameOverlay.style.display = 'none';
-        }
-    }
+    // Frame functionality completely removed - no frames at all
     
     // Initialize card state
     // Set default text shadow
@@ -2374,8 +2294,7 @@ function initCardMaker() {
     if (firstTextColorBtn) {
         firstTextColorBtn.classList.add('active');
     }
-    // Initialize frame
-    updateFrame();
+    // Frame initialization removed - no frames
     updateBackgroundColorVisibility();
     
     // Initialize postcard fonts
@@ -2562,29 +2481,7 @@ function initCardMaker() {
                                 }
                             }
                             
-                            // Handle frame overlay - remove outer shadows, keep only inset and border
-                            const clonedFrame = clonedDoc.querySelector('#cardFrameOverlay');
-                            if (clonedFrame) {
-                                // For postcard, hide frame overlay completely
-                                if (currentTemplate === 'postcard') {
-                                    clonedFrame.style.display = 'none';
-                                } else {
-                                    // Get computed styles
-                                    const computedStyle = clonedDoc.defaultView.getComputedStyle(clonedFrame);
-                                    const boxShadow = computedStyle.boxShadow;
-                                    
-                                    // Remove outer shadows (those starting with "0 0"), keep only inset shadows
-                                    if (boxShadow && boxShadow !== 'none') {
-                                        const shadows = boxShadow.split(',').map(s => s.trim());
-                                        const insetShadows = shadows.filter(s => s.includes('inset'));
-                                        if (insetShadows.length > 0) {
-                                            clonedFrame.style.boxShadow = insetShadows.join(', ');
-                                        } else {
-                                            clonedFrame.style.boxShadow = 'none';
-                                        }
-                                    }
-                                }
-                            }
+                            // Frame overlay removed - no frames in card maker
                             
                             // Fix textarea in cloned document - convert to div for better rendering
                             const clonedTextarea = clonedDoc.querySelector('#cardMessage');
@@ -2846,29 +2743,7 @@ function initCardMaker() {
                                 }
                             }
                             
-                            // Handle frame overlay - remove outer shadows, keep only inset and border
-                            const clonedFrame = clonedDoc.querySelector('#cardFrameOverlay');
-                            if (clonedFrame) {
-                                // For postcard, hide frame overlay completely
-                                if (currentTemplate === 'postcard') {
-                                    clonedFrame.style.display = 'none';
-                                } else {
-                                    // Get computed styles
-                                    const computedStyle = clonedDoc.defaultView.getComputedStyle(clonedFrame);
-                                    const boxShadow = computedStyle.boxShadow;
-                                    
-                                    // Remove outer shadows (those starting with "0 0"), keep only inset shadows
-                                    if (boxShadow && boxShadow !== 'none') {
-                                        const shadows = boxShadow.split(',').map(s => s.trim());
-                                        const insetShadows = shadows.filter(s => s.includes('inset'));
-                                        if (insetShadows.length > 0) {
-                                            clonedFrame.style.boxShadow = insetShadows.join(', ');
-                                        } else {
-                                            clonedFrame.style.boxShadow = 'none';
-                                        }
-                                    }
-                                }
-                            }
+                            // Frame overlay removed - no frames in card maker
                             
                             // Fix textarea in cloned document - convert to div for better rendering
                             const clonedTextarea = clonedDoc.querySelector('#cardMessage');
@@ -3623,21 +3498,39 @@ function initSockHanging() {
     });
 
     // Hang sock button
-    hangSockBtn.addEventListener('click', () => {
+    hangSockBtn.addEventListener('click', async () => {
         const message = sockMessage.value.trim();
         
         if (!selectedSock) return;
 
-        // Get user location or random city
+        // Get user location with real city name via reverse geocoding
         let location;
         if (userLocation) {
-            // Add slight random offset from user location
-            location = {
-                name: 'Your Location',
-                country: getCountryFromLocation(userLocation.lat, userLocation.lng),
-                lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
-                lng: userLocation.lng + (Math.random() - 0.5) * 0.01
-            };
+            // Get real city name from coordinates using reverse geocoding
+            try {
+                const cityName = await getCityNameFromCoordinates(userLocation.lat, userLocation.lng);
+                const country = getCountryFromLocation(userLocation.lat, userLocation.lng);
+                const countryName = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🇹🇭|🇲🇾|🇮🇩|🇻🇳|🌍/g, '').trim();
+                
+                // Format: "City, Country" (e.g., "Seoul, Korea" or "Bangkok, Thailand")
+                location = {
+                    name: cityName ? `${cityName}, ${countryName}` : `${countryName}`,
+                    country: country,
+                    lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
+                    lng: userLocation.lng + (Math.random() - 0.5) * 0.01
+                };
+            } catch (error) {
+                console.error('Error getting city name:', error);
+                // Fallback to country name if reverse geocoding fails
+                const country = getCountryFromLocation(userLocation.lat, userLocation.lng);
+                const countryName = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🇹🇭|🇲🇾|🇮🇩|🇻🇳|🌍/g, '').trim();
+                location = {
+                    name: countryName || 'Unknown',
+                    country: country,
+                    lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
+                    lng: userLocation.lng + (Math.random() - 0.5) * 0.01
+                };
+            }
         } else {
             // Fallback to random city
             location = cities[Math.floor(Math.random() * cities.length)];
@@ -4033,6 +3926,34 @@ function renderRankings() {
     });
 }
 
+// Get real city name from coordinates using reverse geocoding
+async function getCityNameFromCoordinates(lat, lng) {
+    try {
+        // Use OpenStreetMap Nominatim API (free, no API key required)
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`, {
+            headers: {
+                'User-Agent': 'Christmas Website' // Required by Nominatim
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Reverse geocoding failed');
+        }
+        
+        const data = await response.json();
+        
+        // Extract city name from response
+        const address = data.address || {};
+        const city = address.city || address.town || address.village || address.municipality || 
+                    address.county || address.state || address.country || 'Unknown';
+        
+        return city;
+    } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        return null;
+    }
+}
+
 function getCountryFromLocation(lat, lng) {
     // Simple country detection based on coordinates
     // This is a basic approximation - in production, use a reverse geocoding API
@@ -4046,6 +3967,11 @@ function getCountryFromLocation(lat, lng) {
     if (lat >= 47 && lat <= 55 && lng >= 5 && lng <= 15) return '🇩🇪 Germany';
     if (lat >= 41 && lat <= 82 && lng >= 19 && lng <= 180) return '🇷🇺 Russia';
     if (lat >= 18 && lat <= 54 && lng >= 73 && lng <= 135) return '🇨🇳 China';
+    if (lat >= 5 && lat <= 21 && lng >= 97 && lng <= 106) return '🇹🇭 Thailand';
+    if (lat >= 1 && lat <= 7 && lng >= 100 && lng <= 120) return '🇲🇾 Malaysia';
+    if (lat >= -11 && lat <= 6 && lng >= 95 && lng <= 141) return '🇮🇩 Indonesia';
+    if (lat >= 10 && lat <= 24 && lng >= 102 && lng <= 110) return '🇻🇳 Vietnam';
+    if (lat >= 4 && lat <= 21 && lng >= 92 && lng <= 102) return '🇹🇭 Thailand';
     return '🌍 World';
 }
 
@@ -6188,7 +6114,8 @@ function initMobileOptimizations() {
 }
 
 // Share Your Christmas
-let christmasShares = JSON.parse(localStorage.getItem('christmasShares') || '[]');
+// Initialize empty - will be populated ONLY from Firebase (no localStorage, no demo data)
+let christmasShares = [];
 
 function initShareChristmas() {
     const form = document.getElementById('shareChristmasForm');
@@ -6204,7 +6131,7 @@ function initShareChristmas() {
     const locationStatus = document.getElementById('locationStatus');
     const getLocationBtn = document.getElementById('getCurrentLocationBtn');
     
-    // Load existing shares
+    // Load shares ONLY from Firebase - no localStorage
     loadChristmasShares();
     updateShareChristmasStats();
     
@@ -6449,18 +6376,11 @@ function submitChristmasShare() {
         time: new Date().toLocaleTimeString()
     };
     
-    // Add to beginning of array (most recent first)
-    christmasShares.unshift(share);
-    
-    // Keep only last 100 shares
-    if (christmasShares.length > 100) {
-        christmasShares = christmasShares.slice(0, 100);
-    }
-    
-    localStorage.setItem('christmasShares', JSON.stringify(christmasShares));
-    
-    // Save to Firebase (global sharing)
-    saveChristmasShareToFirebase(share);
+    // Save to Firebase FIRST (this is the source of truth)
+    // Do NOT add to local christmasShares - let Firebase real-time subscription update it
+    saveChristmasShareToFirebase(share).then(() => {
+        // After saving to Firebase, the real-time subscription will update the UI
+    });
     
     // Reset form
     imageInput.value = '';
@@ -6498,35 +6418,35 @@ async function loadChristmasShares() {
     
     feed.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5); padding: 1rem;">Loading shares...</p>';
     
-    // Load global shares from Firebase and merge with local
-    const globalShares = await loadGlobalChristmasSharesFromFirebase(100);
-    const allShares = [...globalShares];
-    
-    // Add local shares that aren't in global list
-    christmasShares.forEach(localShare => {
-        if (!allShares.find(s => s.id === localShare.id)) {
-            allShares.push({
-                ...localShare,
-                timestamp: new Date(localShare.timestamp || localShare.date)
+    // Load shares ONLY from Firebase - NO localStorage, NO demo data
+    if (isFirebaseAvailable()) {
+        try {
+            const globalShares = await loadGlobalChristmasSharesFromFirebase(100);
+            christmasShares = [...globalShares];
+            
+            // Sort by timestamp (most recent first)
+            christmasShares.sort((a, b) => {
+                const timeA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp || a.date);
+                const timeB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp || b.date);
+                return timeB - timeA;
             });
+        } catch (error) {
+            console.error('Error loading Christmas shares:', error);
+            christmasShares = [];
         }
-    });
-    
-    // Sort by timestamp (most recent first)
-    allShares.sort((a, b) => {
-        const timeA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp || a.date);
-        const timeB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp || b.date);
-        return timeB - timeA;
-    });
+    } else {
+        // No Firebase - show empty state
+        christmasShares = [];
+    }
     
     feed.innerHTML = '';
     
-    if (allShares.length === 0) {
+    if (christmasShares.length === 0) {
         feed.innerHTML = '<p class="empty-feed-message">No shares yet. Be the first to share your Christmas moment! 🎄</p>';
         return;
     }
     
-    allShares.forEach(share => {
+    christmasShares.forEach(share => {
         const item = document.createElement('div');
         item.className = 'share-christmas-item';
         const time = share.timestamp instanceof Date ? share.timestamp.toLocaleTimeString() : (share.time || '');

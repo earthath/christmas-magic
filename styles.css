@@ -2931,6 +2931,7 @@ body:not(.dark-mode) .control-btn:hover {
     overflow: hidden;
     cursor: move;
     border: none;
+    box-shadow: none;
     height: 100%;
     min-height: 600px;
 }
@@ -2943,14 +2944,8 @@ body:not(.dark-mode) .control-btn:hover {
 }
 
 .card-frame-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 5;
-    border-radius: 24px;
+    display: none !important;
+    /* Frames completely removed from card maker */
 }
 
 .uploaded-image-container {
@@ -3778,22 +3773,20 @@ body:not(.dark-mode) .control-btn:hover {
 
 /* Frame Overlay Styles */
 .card-frame-overlay.frame-simple {
-    border: 8px solid var(--frame-color, #FFB81C);
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+    border: 8px solid var(--frame-color, #FFFFFF);
+    box-shadow: none;
 }
 
 .card-frame-overlay.frame-ornate {
-    border: 12px solid var(--frame-color, #FFB81C);
-    box-shadow: 
-        inset 0 0 30px rgba(0, 0, 0, 0.3),
-        0 0 20px rgba(255, 184, 28, 0.3);
+    border: 12px solid var(--frame-color, #FFFFFF);
+    box-shadow: none;
     background-image: 
         repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.1) 10px, rgba(0, 0, 0, 0.1) 20px);
 }
 
 .card-frame-overlay.frame-snowflake {
-    border: 10px solid var(--frame-color, #FFB81C);
-    box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.3);
+    border: 10px solid var(--frame-color, #FFFFFF);
+    box-shadow: none;
     background-image: 
         radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
         radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.3) 2px, transparent 2px),
@@ -3803,17 +3796,15 @@ body:not(.dark-mode) .control-btn:hover {
 
 .card-frame-overlay.frame-holly {
     border: 10px solid var(--frame-color, #0F5132);
-    box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
     background-image: 
-        repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(255, 184, 28, 0.2) 15px, rgba(255, 184, 28, 0.2) 20px);
+        repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(255, 255, 255, 0.1) 15px, rgba(255, 255, 255, 0.1) 20px);
 }
 
 .card-frame-overlay.frame-gold {
-    border: 12px solid var(--frame-color, #FFD700);
-    box-shadow: 
-        inset 0 0 30px rgba(255, 215, 0, 0.4),
-        0 0 30px rgba(255, 215, 0, 0.3);
-    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 184, 28, 0.1) 100%);
+    border: 12px solid var(--frame-color, #FFFFFF);
+    box-shadow: none;
+    background: transparent;
 }
 
 /* Text Size Control */
