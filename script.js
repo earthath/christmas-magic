@@ -3554,9 +3554,10 @@ function hideLoading(loader) {
 }
 
 // Sock Hanging
-let sockData = JSON.parse(localStorage.getItem('sockData') || '[]');
-let sockStats = JSON.parse(localStorage.getItem('sockStats') || '{"total": 0, "displayed": 0, "hanging": 0}');
-let countryRankings = JSON.parse(localStorage.getItem('countryRankings') || '{}');
+// Initialize empty - will be populated ONLY from Firebase (no localStorage, no demo data)
+let sockData = [];
+let sockStats = {"total": 0, "displayed": 0, "hanging": 0};
+// Country rankings will be calculated dynamically from Firebase data - no separate storage
 let map = null;
 let userLocation = null;
 let sockMarkers = [];
@@ -3597,7 +3598,8 @@ function initSockHanging() {
         initMap();
     }
 
-    // Load initial data
+    // Initial UI will be updated after Firebase data loads
+    // No demo/dummy data - only Firebase data
     updateStats();
     renderFeed();
     renderRankings();
@@ -3653,36 +3655,27 @@ function initSockHanging() {
             timestamp: new Date()
         };
 
-        // Add to data
-        sockData.unshift(sockEntry);
-        if (sockData.length > 50) sockData.pop(); // Keep last 50
+        // Save to Firebase FIRST (this is the source of truth)
+        // Do NOT add to local sockData - let Firebase real-time subscription update it
+        saveSockToFirebase(sockEntry).then(() => {
+            // After saving to Firebase, the real-time subscription will update the UI
+            // This ensures stats are always based on Firebase data
+        });
 
-        // Update stats (only when user actually hangs a sock)
-        // Don't increment total from localStorage - use actual count
+        // Update local stats for immediate feedback (will be corrected by Firebase sync)
         incrementStat('socksHung');
         completeDailyChallenge('sock');
-        sockStats.displayed = sockData.length;
         sockStats.hanging = Math.min(3, sockStats.hanging + 1);
-        // Update total to match displayed (for user's personal count)
-        sockStats.total = sockData.length;
+        
+        // Country rankings will be calculated from Firebase data - no need to store separately
+        // Rankings are calculated dynamically from sockData in renderRankings()
 
-        // Update country rankings
-        const countryCode = location.country;
-        countryRankings[countryCode] = (countryRankings[countryCode] || 0) + 1;
-
-        // Save to localStorage
-        localStorage.setItem('sockData', JSON.stringify(sockData));
-        localStorage.setItem('sockStats', JSON.stringify(sockStats));
-        localStorage.setItem('countryRankings', JSON.stringify(countryRankings));
-
-        // Save to Firebase (global sharing)
-        saveSockToFirebase(sockEntry);
-
-        // Update UI
-        updateStats();
+        // Update UI immediately (will be refreshed by Firebase real-time subscription)
+        // Add to map temporarily until Firebase sync updates it
         addSockToMap(sockEntry);
-        renderFeed();
-        renderRankings();
+        
+        // Stats will be updated by Firebase real-time subscription
+        // This ensures consistency with Firebase data
 
         // Show share button with sock data
         const shareBtn = document.getElementById('shareSockBtn');
@@ -3721,24 +3714,49 @@ function initSockHanging() {
         });
     }
 
-    // Real-time updates from Firebase (if available)
-    // Auto-generation removed - now using real user submissions via Firebase only
-    // No automatic sock creation - only real user submissions
+    // Load data ONLY from Firebase - NO auto-generation, NO localStorage initialization
+    // All data must come from real user submissions via Firebase
     if (isFirebaseAvailable()) {
+        // Load initial data from Firebase (one-time load)
+        loadGlobalSocksFromFirebase(50).then(globalSocks => {
+            // ONLY use Firebase data - ignore localStorage
+            sockData = [...globalSocks];
+            if (sockData.length > 50) sockData = sockData.slice(0, 50);
+            
+            // Stats based ONLY on Firebase data
+            sockStats.displayed = sockData.length;
+            sockStats.total = sockData.length;
+            
+            // DO NOT save Firebase data to localStorage - keep it separate
+            // localStorage is only for user's own socks (when they hang one)
+            
+            // Update UI
+            updateStats();
+            loadSocksOnMap();
+            renderFeed();
+            renderRankings();
+        }).catch(error => {
+            console.error('Error loading socks from Firebase:', error);
+            // If Firebase fails, show empty state
+            sockData = [];
+            sockStats.displayed = 0;
+            sockStats.total = 0;
+            updateStats();
+            renderFeed();
+        });
+        
         // Subscribe to real-time updates from Firebase (read-only, no auto-creation)
         const unsubscribe = subscribeToGlobalSocks((globalSocks) => {
-            // Only update UI with existing socks from Firebase - do NOT create new ones
+            // ONLY update from Firebase - do NOT create new socks
             // This is READ-ONLY - we're just syncing what's in Firebase
             sockData = [...globalSocks];
             if (sockData.length > 50) sockData = sockData.slice(0, 50);
             
-            // DO NOT increment sockStats.total here - this is just syncing existing data
-            // Only update displayed count
+            // Stats based ONLY on Firebase data
             sockStats.displayed = sockData.length;
+            sockStats.total = sockData.length;
             
-            // Save to localStorage (read-only sync from Firebase)
-            localStorage.setItem('sockData', JSON.stringify(sockData));
-            localStorage.setItem('sockStats', JSON.stringify(sockStats));
+            // DO NOT save to localStorage - Firebase is the source of truth
             
             // Update UI
             updateStats();
@@ -3751,6 +3769,13 @@ function initSockHanging() {
         if (unsubscribe) {
             window.sockUnsubscribe = unsubscribe;
         }
+    } else {
+        // No Firebase - show empty state (no localStorage fallback)
+        sockData = [];
+        sockStats.displayed = 0;
+        sockStats.total = 0;
+        updateStats();
+        renderFeed();
     }
 }
 
@@ -3963,10 +3988,23 @@ function renderFeed() {
 
 function renderRankings() {
     const rankingsList = document.getElementById('rankingsList');
+    if (!rankingsList) return;
+    
     rankingsList.innerHTML = '';
 
+    // Calculate country rankings dynamically from Firebase data (sockData) ONLY
+    // NO localStorage, NO separate storage - only from actual Firebase data
+    const countryCounts = {};
+    
+    // Count socks per country from Firebase data only
+    sockData.forEach(sock => {
+        if (sock.country) {
+            countryCounts[sock.country] = (countryCounts[sock.country] || 0) + 1;
+        }
+    });
+
     // Convert to array and sort
-    const rankings = Object.entries(countryRankings)
+    const rankings = Object.entries(countryCounts)
         .map(([country, count]) => ({ country, count }))
         .sort((a, b) => b.count - a.count)
         .slice(0, 10);
@@ -5933,7 +5971,8 @@ function enhanceSockHanging() {
         
         // Populate country filter
         if (countryFilter) {
-            const countries = [...new Set(Object.keys(countryRankings))];
+            // Get countries from Firebase data (sockData) only
+            const countries = [...new Set(sockData.map(sock => sock.country).filter(Boolean))];
             countries.sort().forEach(country => {
                 const option = document.createElement('option');
                 option.value = country;
