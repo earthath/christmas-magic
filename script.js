@@ -150,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initMobileOptimizations();
         initDarkMode();
         initSnowToggle();
+        initControlMenu();
         initShareModal();
         initDailyChallenges();
         initShareChristmas();
@@ -312,6 +313,86 @@ function initCurvedLoop() {
 // Hero Section
 function initHeroSection() {
     initCurvedLoop();
+    
+    // Initialize Lottie animation if player is available
+    const lottiePlayer = document.getElementById('christmasTreeLottie');
+    const treeContainer = document.querySelector('.christmas-tree-container');
+    
+    if (lottiePlayer) {
+        // Ensure the path is correct (handle spaces in filename)
+        const currentSrc = lottiePlayer.getAttribute('src');
+        if (currentSrc && currentSrc.includes(' ')) {
+            // URL encode spaces if needed
+            const encodedSrc = currentSrc.replace(/ /g, '%20');
+            lottiePlayer.setAttribute('src', encodedSrc);
+        }
+        
+        // Wait for Lottie player to be ready
+        lottiePlayer.addEventListener('ready', () => {
+            console.log('Lottie animation loaded successfully');
+        });
+        
+        // Handle errors
+        lottiePlayer.addEventListener('error', (e) => {
+            console.error('Lottie animation error:', e);
+            // Try with original path if encoded failed
+            const originalSrc = 'decorate/Fun Christmas tree.json';
+            if (lottiePlayer.getAttribute('src') !== originalSrc) {
+                lottiePlayer.setAttribute('src', originalSrc);
+            }
+        });
+    }
+    
+    // Make tree "look" at mouse cursor (rotate towards mouse)
+    if (treeContainer) {
+        let mouseX = 0;
+        let mouseY = 0;
+        let currentRotation = 0;
+        const treeLottie = treeContainer.querySelector('.christmas-tree-lottie');
+        
+        // Calculate angle to mouse and rotate tree
+        function updateTreeRotation() {
+            // Get tree center position
+            const treeRect = treeContainer.getBoundingClientRect();
+            const treeCenterX = treeRect.left + treeRect.width / 2;
+            const treeCenterY = treeRect.bottom - treeRect.height / 2;
+            
+            // Calculate angle from tree center to mouse
+            const deltaX = mouseX - treeCenterX;
+            const deltaY = mouseY - treeCenterY;
+            const targetAngle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+            
+            // Smooth rotation (easing)
+            const angleDiff = targetAngle - currentRotation;
+            // Normalize angle difference to -180 to 180
+            let normalizedDiff = ((angleDiff + 180) % 360) - 180;
+            currentRotation += normalizedDiff * 0.1;
+            
+            // Apply rotation with slight tilt effect (like looking up/down)
+            const tiltAmount = Math.min(Math.abs(deltaY) / 200, 15); // Max 15 degrees tilt
+            const tiltDirection = deltaY < 0 ? -1 : 1;
+            const finalRotation = currentRotation + (tiltAmount * tiltDirection * 0.3);
+            
+            // Apply transform to tree
+            if (treeLottie) {
+                treeLottie.style.transform = `rotate(${finalRotation}deg)`;
+            } else {
+                treeContainer.style.transform = `rotate(${finalRotation}deg)`;
+            }
+            
+            requestAnimationFrame(updateTreeRotation);
+        }
+        
+        // Track mouse movement
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+        
+        // Start rotation animation loop
+        updateTreeRotation();
+    }
+    
     const heroButtons = document.querySelectorAll('.hero-btn');
     heroButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -321,17 +402,19 @@ function initHeroSection() {
             const section = btn.dataset.section;
             switchSection(section);
             
-            // Update nav buttons
-            document.querySelectorAll('.nav-btn').forEach(navBtn => {
-                navBtn.classList.remove('active');
-                if (navBtn.dataset.section === section) {
-                    navBtn.classList.add('active');
+            // Update expandable tabs
+            const expandableTabs = document.querySelectorAll('.expandable-tab');
+            expandableTabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.section === section) {
+                    tab.classList.add('active');
                 }
             });
             
             // Hide hero and show nav
             document.getElementById('hero').style.display = 'none';
-            document.querySelector('.main-nav').style.display = 'block';
+            const expandableNav = document.getElementById('expandableTabsNav');
+            if (expandableNav) expandableNav.style.display = 'block';
             
             // Initialize map if going to sock-hanging
             if (section === 'sock-hanging' && !map) {
@@ -488,17 +571,59 @@ function showShareOptions(gameType, shareText, blob, gameTitle) {
         <h3>Share Your Result</h3>
         <p style="margin: 1rem 0; color: rgba(255,255,255,0.7);">${shareText}</p>
         <div class="share-platforms">
-            <button class="share-platform-btn instagram-story-btn" id="instagramStoryBtn" style="background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); border-color: #bc1888;">
-                📸 Instagram Story
+            <button class="share-platform-btn instagram-story-btn" id="instagramStoryBtn">
+                <svg class="share-icon-line" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    <circle cx="12" cy="12" r="3.5"></circle>
+                    <circle cx="17.5" cy="6.5" r="1"></circle>
+                </svg>
             </button>
-            <button class="share-platform-btn" data-platform="twitter">🐦 Twitter</button>
-            <button class="share-platform-btn" data-platform="facebook">📘 Facebook</button>
-            <button class="share-platform-btn" data-platform="whatsapp">💬 WhatsApp</button>
-            <button class="share-platform-btn" data-platform="telegram">✈️ Telegram</button>
-            <button class="share-platform-btn" data-platform="email">📧 Email</button>
+            <button class="share-platform-btn" data-platform="twitter">
+                <svg class="share-icon-line" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                </svg>
+            </button>
+            <button class="share-platform-btn" data-platform="facebook">
+                <svg class="share-icon-line" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                </svg>
+            </button>
+            <button class="share-platform-btn" data-platform="whatsapp">
+                <svg class="share-icon-line" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+            </button>
+            <button class="share-platform-btn" data-platform="telegram">
+                <svg class="share-icon-line" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 2L11 13"></path>
+                    <path d="M22 2l-7 20-4-9-9-4 20-7z"></path>
+                </svg>
+            </button>
+            <button class="share-platform-btn" data-platform="email">
+                <svg class="share-icon-line" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+            </button>
         </div>
-        <div style="margin-top: 1rem;">
-            <button class="action-btn secondary" id="copyShareText">📋 Copy Text</button>
+        <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <button class="share-copy-btn" id="copyShareText">
+                <svg class="share-icon-line" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span>Copy Text</span>
+            </button>
+            ${blob ? `
+            <button class="share-copy-btn" id="downloadImageBtn">
+                <svg class="share-icon-line" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Download Image</span>
+            </button>
+            ` : ''}
         </div>
     `;
     
@@ -507,9 +632,9 @@ function showShareOptions(gameType, shareText, blob, gameTitle) {
     // Instagram Story button (special handling)
     const instagramBtn = modalBody.querySelector('#instagramStoryBtn');
     if (instagramBtn && blob) {
-        instagramBtn.addEventListener('click', () => {
-            shareToInstagramStory(blob, shareText);
+        instagramBtn.addEventListener('click', async () => {
             if (soundEnabled) playSound('click');
+            await shareToInstagramStory(blob, shareText);
         });
     }
     
@@ -517,21 +642,73 @@ function showShareOptions(gameType, shareText, blob, gameTitle) {
     modalBody.querySelectorAll('.share-platform-btn:not(#instagramStoryBtn)').forEach(btn => {
         btn.addEventListener('click', () => {
             const platform = btn.dataset.platform;
-            shareToPlatform(platform, shareText);
+            shareToPlatform(platform, shareText, window.location.href, blob);
             if (soundEnabled) playSound('click');
         });
     });
     
+    // Download button
+    const downloadBtn = modalBody.querySelector('#downloadImageBtn');
+    if (downloadBtn && blob) {
+        downloadBtn.addEventListener('click', () => {
+            if (soundEnabled) playSound('click');
+            downloadImageForSharing(blob);
+            showSuccess('Image downloaded!');
+        });
+    }
+    
     // Copy text button
     const copyBtn = modalBody.querySelector('#copyShareText');
     if (copyBtn) {
-        copyBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText(shareText).then(() => {
-                showSuccess('Text copied to clipboard!');
-                if (soundEnabled) playSound('success');
-            }).catch(() => {
-                showError('Failed to copy text');
-            });
+        copyBtn.addEventListener('click', async () => {
+            try {
+                // Try modern clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareText);
+                    showSuccess('Text copied to clipboard!');
+                    if (soundEnabled) playSound('success');
+                } else {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = shareText;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        const successful = document.execCommand('copy');
+                        if (successful) {
+                            showSuccess('Text copied to clipboard!');
+                            if (soundEnabled) playSound('success');
+                        } else {
+                            throw new Error('Copy command failed');
+                        }
+                    } catch (err) {
+                        showError('Failed to copy text. Please select and copy manually.');
+                    }
+                    document.body.removeChild(textArea);
+                }
+            } catch (err) {
+                console.error('Copy error:', err);
+                // Show text in alert as last resort
+                const textArea = document.createElement('textarea');
+                textArea.value = shareText;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showSuccess('Text copied to clipboard!');
+                    if (soundEnabled) playSound('success');
+                } catch (e) {
+                    showError('Failed to copy. Please select and copy manually.');
+                }
+                document.body.removeChild(textArea);
+            }
         });
     }
     
@@ -607,44 +784,55 @@ function initMusicPlayer() {
     }
 }
 
-// Navigation
+// Expandable Tabs Navigation
 function initNavigation() {
-    const navButtons = document.querySelectorAll('.nav-btn');
-    const homeBtn = document.getElementById('homeBtn');
+    const expandableTabs = document.querySelectorAll('.expandable-tab');
+    const homeTab = document.getElementById('homeTab');
+    const howTab = document.getElementById('howTab');
+    const expandableNav = document.getElementById('expandableTabsNav');
     const hero = document.getElementById('hero');
     
-    // Home button handler
-    if (homeBtn) {
-        homeBtn.addEventListener('click', () => {
+    // Home tab handler
+    if (homeTab) {
+        homeTab.addEventListener('click', () => {
             // Hide all sections
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             
             // Show hero section
             if (hero) hero.style.display = 'block';
             
-            // Remove active from all nav buttons
-            navButtons.forEach(b => b.classList.remove('active'));
-            homeBtn.classList.add('active');
+            // Hide navigation
+            if (expandableNav) expandableNav.style.display = 'none';
+            
+            // Remove active from all tabs
+            expandableTabs.forEach(t => t.classList.remove('active'));
+            homeTab.classList.add('active');
             
             if (soundEnabled) playSound('click');
         });
     }
     
-    // Other nav buttons
-    navButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Skip "How" button and "Home" button - they have their own handlers
-            if (btn.id === 'howBtn' || btn.id === 'homeBtn') return;
+    
+    // Other tabs
+    expandableTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Skip "Home" tab - it has its own handler
+            if (tab.id === 'homeTab') return;
             
-            const section = btn.dataset.section;
+            const section = tab.dataset.section;
             if (section) {
                 switchSection(section);
                 
-                navButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                expandableTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
                 
-                // Hide hero section
+                // Hide hero section and show nav
                 if (hero) hero.style.display = 'none';
+                if (expandableNav) {
+                    expandableNav.style.display = 'block';
+                }
+                
+                if (soundEnabled) playSound('click');
             }
         });
     });
@@ -876,7 +1064,7 @@ function initCardMaker() {
                 cardPreview.style.border = '3px solid rgba(255, 184, 28, 0.6)';
                 cardPreview.style.boxShadow = '0 0 30px rgba(255, 184, 28, 0.3)';
             } else {
-                cardPreview.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+                cardPreview.style.border = 'none';
                 cardPreview.style.boxShadow = 'none';
             }
             saveCardState();
@@ -1014,18 +1202,21 @@ function initCardMaker() {
                 return;
             }
             
-            // Ensure all images are loaded before capturing
-            const images = cardPreview.querySelectorAll('img');
-            const imagePromises = Array.from(images).map(img => {
-                if (img.complete) return Promise.resolve();
-                return new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = reject;
-                    setTimeout(resolve, 1000); // Timeout after 1 second
+            // Load html2canvas if needed
+            loadHtml2Canvas().then(() => {
+                // Ensure all images are loaded before capturing
+                const images = cardPreview.querySelectorAll('img');
+                const imagePromises = Array.from(images).map(img => {
+                    if (img.complete) return Promise.resolve();
+                    return new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        setTimeout(resolve, 1000); // Timeout after 1 second
+                    });
                 });
-            });
-            
-            Promise.all(imagePromises).then(() => {
+                
+                return Promise.all(imagePromises);
+            }).then(() => {
                 // Ensure textarea content is visible (for regular cards)
                 const cardMessage = document.getElementById('cardMessage');
                 let originalOverflow = '';
@@ -3984,6 +4175,29 @@ function initGames() {
         gameCards.forEach(card => {
             card.addEventListener('click', () => {
                 const game = card.dataset.game;
+                const section = card.dataset.section;
+                
+                // Handle section navigation (Quiz, Gift Exchange)
+                if (section) {
+                    switchSection(section);
+                    // Update nav tabs
+                    const expandableTabs = document.querySelectorAll('.expandable-tab');
+                    expandableTabs.forEach(t => {
+                        t.classList.remove('active');
+                        if (t.dataset.section === section) {
+                            t.classList.add('active');
+                        }
+                    });
+                    // Hide hero and show nav
+                    const hero = document.getElementById('hero');
+                    const expandableNav = document.getElementById('expandableTabsNav');
+                    if (hero) hero.style.display = 'none';
+                    if (expandableNav) expandableNav.style.display = 'block';
+                    if (soundEnabled) playSound('click');
+                    return;
+                }
+                
+                // Handle game selection
                 if (!game) return;
                 
                 // Hide all game containers
@@ -4888,6 +5102,42 @@ function clearSelection(gridDiv) {
 
 // Share to Specific Platforms
 function shareToPlatform(platform, text, url = window.location.href, blob = null) {
+    // If we have a blob and native share is available, use it (works better for images)
+    if (blob && navigator.share && navigator.canShare) {
+        blob.arrayBuffer().then(buffer => {
+            const file = new File([buffer], `christmas-${platform}-${Date.now()}.png`, { type: 'image/png' });
+            const shareData = {
+                title: 'My Christmas Result',
+                text: text,
+                files: [file]
+            };
+            
+            if (navigator.canShare(shareData)) {
+                navigator.share(shareData).then(() => {
+                    showSuccess('Shared successfully!');
+                    if (soundEnabled) playSound('success');
+                }).catch((error) => {
+                    if (error.name !== 'AbortError') {
+                        // Fallback to URL-based sharing
+                        shareToPlatformURL(platform, text, url, blob);
+                    }
+                });
+            } else {
+                // Can't share files, use URL-based sharing
+                shareToPlatformURL(platform, text, url, blob);
+            }
+        }).catch(() => {
+            // Fallback to URL-based sharing
+            shareToPlatformURL(platform, text, url, blob);
+        });
+    } else {
+        // No native share or no blob - use URL-based sharing
+        shareToPlatformURL(platform, text, url, blob);
+    }
+}
+
+// URL-based platform sharing (fallback)
+function shareToPlatformURL(platform, text, url, blob) {
     const encodedText = encodeURIComponent(text);
     const encodedUrl = encodeURIComponent(url);
     
@@ -4900,81 +5150,166 @@ function shareToPlatform(platform, text, url = window.location.href, blob = null
     };
     
     if (platforms[platform]) {
-        window.open(platforms[platform], '_blank', 'width=600,height=400');
+        if (platform === 'email') {
+            window.location.href = platforms[platform];
+        } else {
+            window.open(platforms[platform], '_blank', 'width=600,height=400');
+        }
+        showSuccess('Share window opened!');
     }
 }
 
 // Share to Instagram Stories (Mobile)
-function shareToInstagramStory(blob, text = '') {
+async function shareToInstagramStory(blob, text = '') {
     if (!blob) {
         showError('No image to share');
         return;
     }
     
-    // Check if on mobile
+    // Check if we're on mobile
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
     
-    if (isMobile && navigator.share) {
-        // Use native share API - Instagram will appear as an option on mobile
-        blob.arrayBuffer().then(buffer => {
+    console.log('Instagram Share Debug:', {
+        isMobile,
+        hasNavigatorShare: !!navigator.share,
+        isSecureContext,
+        protocol: location.protocol,
+        hostname: location.hostname
+    });
+    
+    // Check if native share is available and we're in a secure context
+    if (navigator.share && isSecureContext) {
+        try {
+            // Convert blob to File
+            const buffer = await blob.arrayBuffer();
             const file = new File([buffer], `christmas-story-${Date.now()}.png`, { type: 'image/png' });
-            navigator.share({
-                title: 'My Christmas Result',
-                text: text || 'Check out my Christmas result! 🎄',
+            
+            // Prepare share data with just the file (no text to avoid issues)
+            const shareData = {
                 files: [file]
-            }).then(() => {
-                showSuccess('Shared to Instagram!');
-                if (soundEnabled) playSound('success');
-            }).catch((error) => {
-                // If user cancels or share fails, try Instagram deep link
-                if (error.name !== 'AbortError') {
-                    openInstagramApp(blob);
-                }
+            };
+            
+            console.log('Prepared file for sharing:', {
+                name: file.name,
+                type: file.type,
+                size: file.size
             });
-        }).catch(() => {
-            openInstagramApp(blob);
-        });
+            
+            // Try to share - don't rely on canShare as it may return false incorrectly
+            try {
+                console.log('Calling navigator.share...');
+                await navigator.share(shareData);
+                console.log('Share dialog opened successfully');
+                if (soundEnabled) playSound('success');
+                return; // Success - user will see Instagram's share interface
+            } catch (error) {
+                console.error('navigator.share error:', error);
+                
+                // User cancelled - do nothing
+                if (error.name === 'AbortError' || error.message.includes('cancel')) {
+                    console.log('User cancelled share');
+                    return;
+                }
+                
+                // Check if error is about unsupported file sharing
+                if (error.message && error.message.includes('file')) {
+                    console.log('File sharing not supported, trying without canShare check');
+                    // Some browsers need canShare check first
+                    if (navigator.canShare) {
+                        const canShare = navigator.canShare(shareData);
+                        console.log('canShare result:', canShare);
+                        if (!canShare) {
+                            throw new Error('File sharing not supported by browser');
+                        }
+                    }
+                }
+                
+                throw error; // Re-throw to be caught by outer catch
+            }
+        } catch (error) {
+            console.error('Error in share process:', error);
+            // Fallback: open Instagram app (no download)
+            if (isMobile) {
+                openInstagramApp(blob, false);
+                showError('Native share failed. Please download the image and share manually, or try again.');
+            } else {
+                showError('Native share not available. Please download the image and share manually.');
+            }
+        }
     } else {
-        // Desktop or no native share - try to open Instagram app or web
-        openInstagramApp(blob);
+        // No native share API or not secure context
+        const reason = !navigator.share ? 'Browser does not support native sharing' : 'Page must be served over HTTPS';
+        console.log('Cannot use native share:', reason);
+        if (isMobile) {
+            openInstagramApp(blob, false);
+            showError(`${reason}. Please download the image and share manually.`);
+        } else {
+            showError('Native share not available. Please download the image and share manually.');
+        }
     }
 }
 
-// Open Instagram App (fallback)
-function openInstagramApp(blob) {
-    // Create a download link first
+// Helper function to download image for sharing
+function downloadImageForSharing(blob) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.download = `christmas-story-${Date.now()}.png`;
+    link.download = `christmas-share-${Date.now()}.png`;
     link.href = url;
+    link.style.display = 'none';
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Open Instagram App (fallback)
+function openInstagramApp(blob, download = false) {
+    // Only download if explicitly requested
+    if (download && blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `christmas-story-${Date.now()}.png`;
+        link.href = url;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
     
     // Try to open Instagram app
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isAndroid = /Android/.test(navigator.userAgent);
     
     if (isIOS) {
-        // iOS: Try to open Instagram Stories
-        window.location.href = 'instagram-stories://share';
-        setTimeout(() => {
+        // iOS: Try to open Instagram Stories directly
+        try {
+            window.location.href = 'instagram-stories://share';
+            setTimeout(() => {
+                // If that didn't work, try opening Instagram app
+                window.location.href = 'instagram://';
+            }, 1000);
+        } catch (e) {
             // Fallback to Instagram app
             window.location.href = 'instagram://';
-        }, 500);
+        }
     } else if (isAndroid) {
-        // Android: Try to open Instagram
-        window.location.href = 'intent://share#Intent;package=com.instagram.android;scheme=https;end';
-        setTimeout(() => {
+        // Android: Try to open Instagram with intent
+        try {
+            window.location.href = 'intent://share#Intent;package=com.instagram.android;scheme=https;end';
+            setTimeout(() => {
+                // Fallback to web Instagram if app not installed
+                window.open('https://www.instagram.com/', '_blank');
+            }, 1000);
+        } catch (e) {
             // Fallback to web Instagram
             window.open('https://www.instagram.com/', '_blank');
-        }, 500);
+        }
     } else {
         // Desktop: Open Instagram web
         window.open('https://www.instagram.com/', '_blank');
-        showSuccess('Image downloaded! Open Instagram and add it to your story.');
     }
-    
-    // Clean up
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // Share Game Results
@@ -5897,12 +6232,19 @@ function updateShareChristmasStats() {
     if (shareChristmasToday) shareChristmasToday.textContent = userStats.christmasSharesToday || 0;
 }
 
-// How Button
+// How Button (in Control Bar)
 function initHowButton() {
     const howBtn = document.getElementById('howBtn');
     if (howBtn) {
         howBtn.addEventListener('click', () => {
             showHowModal();
+            // Close control menu on mobile
+            const controlButtonsWrapper = document.querySelector('.control-buttons-wrapper');
+            const controlMenuToggle = document.getElementById('controlMenuToggle');
+            if (controlButtonsWrapper && controlMenuToggle) {
+                controlButtonsWrapper.classList.remove('active');
+                controlMenuToggle.classList.remove('active');
+            }
             if (soundEnabled) playSound('click');
         });
     }
@@ -5946,9 +6288,11 @@ function showHowModal() {
     modal.style.display = 'flex';
 }
 
-// Snow Animation
+// Optimized Snow Animation
 let snowInterval = null;
 let snowEnabled = JSON.parse(localStorage.getItem('snowEnabled') || 'true');
+let maxSnowflakes = 30; // Limit number of flakes
+let currentSnowflakes = 0;
 
 function initSnow() {
     if (!snowEnabled) return;
@@ -5956,28 +6300,46 @@ function initSnow() {
     const snowContainer = document.getElementById('snowContainer');
     if (!snowContainer) return;
     
-    const snowflakes = ['❄', '❅', '❆', '✻', '✼', '✽'];
+    // Clear existing interval if any
+    if (snowInterval) {
+        clearInterval(snowInterval);
+        snowInterval = null;
+    }
+    
+    const snowflakes = ['❄', '❅', '❆'];
     
     function createSnowflake() {
+        // Limit number of snowflakes for performance
+        if (currentSnowflakes >= maxSnowflakes) return;
+        
         const snowflake = document.createElement('div');
         snowflake.className = 'snowflake';
         snowflake.textContent = snowflakes[Math.floor(Math.random() * snowflakes.length)];
         snowflake.style.left = Math.random() * 100 + '%';
-        snowflake.style.animationDuration = (Math.random() * 3 + 2) + 's';
-        snowflake.style.opacity = Math.random() * 0.5 + 0.5;
-        snowflake.style.fontSize = (Math.random() * 10 + 10) + 'px';
+        snowflake.style.animationDuration = (Math.random() * 3 + 3) + 's'; // 3-6 seconds
+        snowflake.style.opacity = Math.random() * 0.3 + 0.4; // 0.4-0.7
+        snowflake.style.fontSize = (Math.random() * 6 + 12) + 'px'; // 12-18px
         
         snowContainer.appendChild(snowflake);
+        currentSnowflakes++;
         
+        // Remove after animation completes
+        const duration = parseFloat(snowflake.style.animationDuration) * 1000;
         setTimeout(() => {
-            snowflake.remove();
-        }, 5000);
+            if (snowflake.parentNode) {
+                snowflake.remove();
+                currentSnowflakes--;
+            }
+        }, duration);
     }
     
-    // Clear existing interval if any
-    if (snowInterval) clearInterval(snowInterval);
+    // Create initial snowflakes
+    for (let i = 0; i < 10; i++) {
+        setTimeout(() => createSnowflake(), i * 200);
+    }
     
-    snowInterval = setInterval(createSnowflake, 300);
+    // Create new snowflakes less frequently (every 800ms instead of 300ms)
+    snowInterval = setInterval(createSnowflake, 800);
 }
 
 function initSnowToggle() {
@@ -5990,6 +6352,8 @@ function initSnowToggle() {
     if (!snowEnabled) {
         snowToggle.classList.add('disabled');
         snowContainer.style.display = 'none';
+    } else {
+        initSnow();
     }
     
     snowToggle.addEventListener('click', () => {
@@ -5999,6 +6363,7 @@ function initSnowToggle() {
         if (snowEnabled) {
             snowToggle.classList.remove('disabled');
             snowContainer.style.display = 'block';
+            currentSnowflakes = 0; // Reset counter
             initSnow();
         } else {
             snowToggle.classList.add('disabled');
@@ -6009,20 +6374,78 @@ function initSnowToggle() {
             }
             // Clear existing snowflakes
             snowContainer.innerHTML = '';
+            currentSnowflakes = 0;
         }
         
         if (soundEnabled) playSound('click');
     });
 }
 
+// Control Menu Toggle (Mobile)
+function initControlMenu() {
+    const controlMenuToggle = document.getElementById('controlMenuToggle');
+    const controlButtonsWrapper = document.querySelector('.control-buttons-wrapper');
+    const controlButtonsContainer = document.getElementById('controlButtonsContainer');
+    
+    if (!controlMenuToggle || !controlButtonsWrapper || !controlButtonsContainer) return;
+    
+    controlMenuToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        controlButtonsWrapper.classList.toggle('active');
+        controlMenuToggle.classList.toggle('active');
+        
+        if (soundEnabled) playSound('click');
+    });
+    
+    // Close menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!controlButtonsWrapper.contains(e.target)) {
+            controlButtonsWrapper.classList.remove('active');
+            controlMenuToggle.classList.remove('active');
+        }
+    });
+    
+    // Close menu when clicking a control button
+    const controlButtons = controlButtonsContainer.querySelectorAll('.control-btn');
+    controlButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Small delay to allow the button action to complete
+            setTimeout(() => {
+                controlButtonsWrapper.classList.remove('active');
+                controlMenuToggle.classList.remove('active');
+            }, 200);
+        });
+    });
+}
+
 // Sound Effects
 function initSoundToggle() {
     const soundToggle = document.getElementById('soundToggle');
+    if (!soundToggle) return;
+    
+    // Set initial state
+    soundToggle.classList.toggle('muted', !soundEnabled);
+    updateSoundIcon(soundToggle);
+    
     soundToggle.addEventListener('click', () => {
         soundEnabled = !soundEnabled;
         soundToggle.classList.toggle('muted', !soundEnabled);
-        soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+        updateSoundIcon(soundToggle);
+        if (soundEnabled) playSound('click');
     });
+}
+
+function updateSoundIcon(button) {
+    const icon = button.querySelector('.control-icon svg');
+    if (!icon) return;
+    
+    if (soundEnabled) {
+        // Sound on icon
+        icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>';
+    } else {
+        // Sound off icon
+        icon.innerHTML = '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>';
+    }
 }
 
 // Dark Mode Toggle
@@ -6038,25 +6461,25 @@ function initDarkMode() {
     // Apply initial theme
     if (isDark) {
         document.body.classList.add('dark-mode');
-        darkModeToggle.textContent = '☀️';
     } else {
         document.body.classList.remove('dark-mode');
-        darkModeToggle.textContent = '🌙';
     }
+    
+    // Update icon based on current mode
+    updateThemeIcon(darkModeToggle);
     
     darkModeToggle.addEventListener('click', () => {
         const isCurrentlyDark = document.body.classList.contains('dark-mode');
         
         if (isCurrentlyDark) {
             document.body.classList.remove('dark-mode');
-            darkModeToggle.textContent = '🌙';
             localStorage.setItem('theme', 'light');
         } else {
             document.body.classList.add('dark-mode');
-            darkModeToggle.textContent = '☀️';
             localStorage.setItem('theme', 'dark');
         }
         
+        updateThemeIcon(darkModeToggle);
         if (soundEnabled) playSound('click');
     });
     
@@ -6065,13 +6488,27 @@ function initDarkMode() {
         if (!localStorage.getItem('theme')) {
             if (e.matches) {
                 document.body.classList.add('dark-mode');
-                darkModeToggle.textContent = '☀️';
             } else {
                 document.body.classList.remove('dark-mode');
-                darkModeToggle.textContent = '🌙';
             }
+            updateThemeIcon(darkModeToggle);
         }
     });
+}
+
+function updateThemeIcon(button) {
+    const icon = button.querySelector('.control-icon svg');
+    if (!icon) return;
+    
+    const isDark = document.body.classList.contains('dark-mode');
+    
+    if (isDark) {
+        // Sun icon (light mode)
+        icon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+    } else {
+        // Moon icon (dark mode)
+        icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+    }
 }
 
 function playSound(type) {

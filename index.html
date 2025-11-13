@@ -18,6 +18,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&family=Kalam:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <!-- Lottie Animation Library -->
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <!-- Leaflet and html2canvas loaded dynamically when needed -->
 </head>
 <body>
@@ -29,20 +31,68 @@
     <div class="tree-decoration tree-left">🎄</div>
     <div class="tree-decoration tree-right">🎄</div>
 
-    <!-- Sound Toggle -->
-    <button class="sound-toggle" id="soundToggle" aria-label="Toggle sound">
-        🔊
-    </button>
-    
-    <!-- Dark Mode Toggle -->
-    <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
-        🌙
-    </button>
-    
-    <!-- Snow Toggle -->
-    <button class="snow-toggle" id="snowToggle" aria-label="Toggle snow animation">
-        ❄️
-    </button>
+    <!-- Control Buttons -->
+    <div class="control-buttons-wrapper">
+        <!-- Mobile Toggle Button -->
+        <button class="control-menu-toggle" id="controlMenuToggle" aria-label="Toggle controls menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+        </button>
+        
+        <!-- Control Buttons Container -->
+        <div class="control-buttons-container" id="controlButtonsContainer">
+            <!-- Sound Toggle -->
+            <button class="control-btn" id="soundToggle" aria-label="Toggle sound">
+                <span class="control-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                </span>
+                <span class="control-label">Sound</span>
+            </button>
+            
+            <!-- Dark Mode Toggle -->
+            <button class="control-btn" id="darkModeToggle" aria-label="Toggle dark mode">
+                <span class="control-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </span>
+                <span class="control-label">Theme</span>
+            </button>
+            
+            <!-- Snow Toggle -->
+            <button class="control-btn" id="snowToggle" aria-label="Toggle snow animation">
+                <span class="control-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="2" x2="12" y2="22"></line>
+                        <line x1="17" y1="7" x2="7" y2="17"></line>
+                        <line x1="7" y1="7" x2="17" y2="17"></line>
+                        <line x1="2" y1="12" x2="22" y2="12"></line>
+                        <line x1="17" y1="17" x2="7" y2="7"></line>
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                    </svg>
+                </span>
+                <span class="control-label">Snow</span>
+            </button>
+            
+            <!-- How/Help Button -->
+            <button class="control-btn" id="howBtn" aria-label="How to use">
+                <span class="control-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </span>
+                <span class="control-label">How</span>
+            </button>
+        </div>
+    </div>
     
     <!-- Music Player -->
     <div class="music-player" id="musicPlayer" style="display: none;">
@@ -55,6 +105,22 @@
 
     <!-- Hero Section -->
     <section class="hero-section" id="hero">
+        <!-- Animated Christmas Tree - Lottie Animation -->
+        <div class="christmas-tree-container">
+            <lottie-player 
+                src="decorate/Fun Christmas tree.json" 
+                background="transparent" 
+                speed="1" 
+                style="width: 100%; height: 100%;" 
+                loop 
+                autoplay
+                mode="normal"
+                class="christmas-tree-lottie"
+                id="christmasTreeLottie">
+            </lottie-player>
+            <div class="tree-glow"></div>
+        </div>
+        
         <!-- Curved Loop Text Animation -->
         <div class="curved-loop-container">
             <svg class="curved-loop-svg" viewBox="0 0 1200 400" xmlns="http://www.w3.org/2000/svg">
@@ -128,20 +194,68 @@
         </div>
     </section>
 
-    <!-- Main Navigation -->
-    <nav class="main-nav" style="display: none;">
-        <div class="nav-container">
-            <h1 class="logo">🎄 Christmas Magic</h1>
-            <div class="nav-buttons">
-                <button class="nav-btn" id="homeBtn">🏠 Home</button>
-                <button class="nav-btn active" data-section="card-maker">✉️ Card Maker</button>
-                <button class="nav-btn" data-section="advent-calendar">🎁 Advent Calendar</button>
-                <button class="nav-btn" data-section="personality-quiz">🎭 Quiz</button>
-                <button class="nav-btn" data-section="sock-hanging">🧦 Hang Sock</button>
-                <button class="nav-btn" data-section="gift-exchange">🎁 Gift Exchange</button>
-                <button class="nav-btn" data-section="games">🎮 Games</button>
-                <button class="nav-btn" data-section="share-christmas">📸 Share Christmas</button>
-                <button class="nav-btn" id="howBtn">❓ How</button>
+    <!-- Expandable Tabs Navigation -->
+    <nav class="expandable-tabs-nav" id="expandableTabsNav" style="display: none;">
+        <div class="expandable-tabs-container">
+            <div class="expandable-tabs-wrapper">
+                <button class="expandable-tab" id="homeTab" data-section="home">
+                    <span class="tab-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </span>
+                    <span class="tab-label">Home</span>
+                </button>
+                <button class="expandable-tab active" data-section="card-maker">
+                    <span class="tab-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </span>
+                    <span class="tab-label">Card Maker</span>
+                </button>
+                <button class="expandable-tab" data-section="advent-calendar">
+                    <span class="tab-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                    </span>
+                    <span class="tab-label">Advent Calendar</span>
+                </button>
+                <button class="expandable-tab" data-section="sock-hanging">
+                    <span class="tab-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </span>
+                    <span class="tab-label">Hang Sock</span>
+                </button>
+                <button class="expandable-tab" data-section="games">
+                    <span class="tab-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                    </span>
+                    <span class="tab-label">Games</span>
+                </button>
+                <button class="expandable-tab" data-section="share-christmas">
+                    <span class="tab-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </span>
+                    <span class="tab-label">Share Christmas</span>
+                </button>
             </div>
         </div>
     </nav>
@@ -354,7 +468,16 @@ Schitt's Creek, PA 24216</textarea>
                                 <div class="action-buttons-grid">
                                     <button class="action-btn download-btn" id="downloadCard">📥 Download</button>
                                     <button class="action-btn email-btn" id="emailCard">📧 Email</button>
-                                    <button class="action-btn share-btn" id="shareCard">📱 Share</button>
+                                    <button class="action-btn share-btn" id="shareCard">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="18" cy="5" r="3"></circle>
+                                            <circle cx="6" cy="12" r="3"></circle>
+                                            <circle cx="18" cy="19" r="3"></circle>
+                                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                                        </svg>
+                                        <span>Share</span>
+                                    </button>
                                     <button class="action-btn reset-btn" id="resetCard">🔄 Reset</button>
                                 </div>
                             </div>
@@ -663,6 +786,16 @@ Schitt's Creek, PA 24216</textarea>
                     <h3>Christmas Wordle</h3>
                     <p>Guess the word!</p>
                 </div>
+                <div class="game-card" data-section="personality-quiz">
+                    <div class="game-icon">🎭</div>
+                    <h3>Personality Quiz</h3>
+                    <p>Discover your character!</p>
+                </div>
+                <div class="game-card" data-section="gift-exchange">
+                    <div class="game-icon">🎁</div>
+                    <h3>Secret Santa</h3>
+                    <p>Generate gift pairs!</p>
+                </div>
             </div>
             
             <!-- Games Leaderboard -->
@@ -841,6 +974,9 @@ Schitt's Creek, PA 24216</textarea>
         </div>
     </section>
     </div>
+    
+    <!-- Green Organic Background Shape -->
+    <div class="green-organic-bg"></div>
     
     <!-- Footer -->
     <footer class="site-footer">
