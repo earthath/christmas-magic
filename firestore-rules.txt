@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read access to all collections
+    match /{document=**} {
+      allow read: if true;
+    }
+    
+    // Allow write access (you can restrict this later)
+    match /socks/{sockId} {
+      allow create: if true;
+    }
+    
+    match /christmasShares/{shareId} {
+      allow create: if true;
+    }
+    
+    match /leaderboards/{gameType}/scores/{scoreId} {
+      allow create: if true;
+    }
+  }
+}
+

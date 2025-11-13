@@ -25,6 +25,215 @@ const decorations = [
     '⛄', '🕊️', '🎵', '🎶', '🎤', '🎸', '🎹', '🎺'
 ];
 
+// ============================================
+// Firebase Backend Integration (Global Sharing)
+// ============================================
+
+// Check if Firebase is available
+function isFirebaseAvailable() {
+    return typeof firebase !== 'undefined' && window.firebaseInitialized && window.db !== null;
+}
+
+// Firebase: Save Sock to Global Database
+async function saveSockToFirebase(sockEntry) {
+    if (!isFirebaseAvailable()) {
+        console.log('Firebase not available, using localStorage only');
+        return false;
+    }
+
+    try {
+        await window.db.collection('socks').add({
+            emoji: sockEntry.emoji,
+            message: sockEntry.message || null,
+            city: sockEntry.city,
+            country: sockEntry.country,
+            lat: sockEntry.lat,
+            lng: sockEntry.lng,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: new Date().toISOString()
+        });
+        console.log('Sock saved to Firebase');
+        return true;
+    } catch (error) {
+        console.error('Error saving sock to Firebase:', error);
+        return false;
+    }
+}
+
+// Firebase: Load Global Socks
+async function loadGlobalSocksFromFirebase(limit = 50) {
+    if (!isFirebaseAvailable()) {
+        return [];
+    }
+
+    try {
+        const snapshot = await window.db.collection('socks')
+            .orderBy('timestamp', 'desc')
+            .limit(limit)
+            .get();
+
+        const globalSocks = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            globalSocks.push({
+                id: doc.id,
+                emoji: data.emoji,
+                message: data.message,
+                city: data.city,
+                country: data.country,
+                lat: data.lat,
+                lng: data.lng,
+                timestamp: data.timestamp?.toDate() || new Date(data.createdAt)
+            });
+        });
+        return globalSocks;
+    } catch (error) {
+        console.error('Error loading socks from Firebase:', error);
+        return [];
+    }
+}
+
+// Firebase: Save Christmas Share to Global Database
+async function saveChristmasShareToFirebase(share) {
+    if (!isFirebaseAvailable()) {
+        console.log('Firebase not available, using localStorage only');
+        return false;
+    }
+
+    try {
+        // Store image in Firestore (base64) - Note: For large images, consider using Firebase Storage
+        await window.db.collection('christmasShares').add({
+            image: share.image,
+            message: share.message || null,
+            location: share.location,
+            date: share.date,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: new Date().toISOString()
+        });
+        console.log('Christmas share saved to Firebase');
+        return true;
+    } catch (error) {
+        console.error('Error saving Christmas share to Firebase:', error);
+        return false;
+    }
+}
+
+// Firebase: Load Global Christmas Shares
+async function loadGlobalChristmasSharesFromFirebase(limit = 100) {
+    if (!isFirebaseAvailable()) {
+        return [];
+    }
+
+    try {
+        const snapshot = await window.db.collection('christmasShares')
+            .orderBy('timestamp', 'desc')
+            .limit(limit)
+            .get();
+
+        const globalShares = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            globalShares.push({
+                id: doc.id,
+                image: data.image,
+                message: data.message,
+                location: data.location,
+                date: data.date,
+                timestamp: data.timestamp?.toDate() || new Date(data.createdAt)
+            });
+        });
+        return globalShares;
+    } catch (error) {
+        console.error('Error loading Christmas shares from Firebase:', error);
+        return [];
+    }
+}
+
+// Firebase: Save Game Score to Global Leaderboard
+async function saveGameScoreToFirebase(gameType, score, country) {
+    if (!isFirebaseAvailable()) {
+        console.log('Firebase not available, using localStorage only');
+        return false;
+    }
+
+    try {
+        await window.db.collection('leaderboards').doc(gameType).collection('scores').add({
+            score: score,
+            country: country,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: new Date().toISOString()
+        });
+        console.log('Game score saved to Firebase');
+        return true;
+    } catch (error) {
+        console.error('Error saving game score to Firebase:', error);
+        return false;
+    }
+}
+
+// Firebase: Load Global Leaderboard
+async function loadGlobalLeaderboardFromFirebase(gameType, limit = 50) {
+    if (!isFirebaseAvailable()) {
+        return [];
+    }
+
+    try {
+        const snapshot = await window.db.collection('leaderboards').doc(gameType)
+            .collection('scores')
+            .orderBy('score', gameType === 'memory' || gameType === 'wordsearch' ? 'asc' : 'desc')
+            .limit(limit)
+            .get();
+
+        const scores = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            scores.push({
+                score: data.score,
+                country: data.country,
+                date: data.createdAt,
+                timestamp: data.timestamp?.toDate() || new Date(data.createdAt)
+            });
+        });
+        return scores;
+    } catch (error) {
+        console.error('Error loading leaderboard from Firebase:', error);
+        return [];
+    }
+}
+
+// Firebase: Real-time listener for socks (optional - for live updates)
+function subscribeToGlobalSocks(callback) {
+    if (!isFirebaseAvailable()) {
+        return null;
+    }
+
+    try {
+        return window.db.collection('socks')
+            .orderBy('timestamp', 'desc')
+            .limit(50)
+            .onSnapshot((snapshot) => {
+                const globalSocks = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    globalSocks.push({
+                        id: doc.id,
+                        emoji: data.emoji,
+                        message: data.message,
+                        city: data.city,
+                        country: data.country,
+                        lat: data.lat,
+                        lng: data.lng,
+                        timestamp: data.timestamp?.toDate() || new Date(data.createdAt)
+                    });
+                });
+                callback(globalSocks);
+            });
+    } catch (error) {
+        console.error('Error subscribing to socks:', error);
+        return null;
+    }
+}
+
 // Advent Calendar Content
 const adventContent = {
     1: { type: 'fact', content: '🎄 The tradition of Christmas trees originated in Germany in the 16th century!' },
@@ -3464,6 +3673,9 @@ function initSockHanging() {
         localStorage.setItem('sockStats', JSON.stringify(sockStats));
         localStorage.setItem('countryRankings', JSON.stringify(countryRankings));
 
+        // Save to Firebase (global sharing)
+        saveSockToFirebase(sockEntry);
+
         // Update UI
         updateStats();
         addSockToMap(sockEntry);
@@ -3536,6 +3748,9 @@ function initSockHanging() {
             localStorage.setItem('sockData', JSON.stringify(sockData));
             localStorage.setItem('sockStats', JSON.stringify(sockStats));
             localStorage.setItem('countryRankings', JSON.stringify(countryRankings));
+
+            // Save to Firebase (global sharing)
+            saveSockToFirebase(sockEntry);
 
             updateStats();
             addSockToMap(sockEntry);
@@ -3633,13 +3848,33 @@ function loadSocksOnMap() {
     sockMarkers.forEach(marker => map.removeLayer(marker));
     sockMarkers = [];
 
-    // Show recent socks on map
-    const recentSocks = sockData.slice(0, 50);
-    const mapCount = document.getElementById('mapCount');
-    mapCount.textContent = recentSocks.length;
+    // Load global socks from Firebase (if available) and merge with local
+    loadGlobalSocksFromFirebase(50).then(globalSocks => {
+        const allSocks = [...globalSocks];
+        
+        // Add local socks that aren't in global list
+        sockData.forEach(localSock => {
+            if (!allSocks.find(s => s.id === localSock.id)) {
+                allSocks.push(localSock);
+            }
+        });
 
-    recentSocks.forEach(sock => {
-        addSockToMap(sock);
+        // Show recent socks on map (up to 50)
+        const recentSocks = allSocks.slice(0, 50);
+        const mapCount = document.getElementById('mapCount');
+        if (mapCount) mapCount.textContent = recentSocks.length;
+
+        recentSocks.forEach(sock => {
+            addSockToMap(sock);
+        });
+    }).catch(() => {
+        // Fallback to local socks only
+        const recentSocks = sockData.slice(0, 50);
+        const mapCount = document.getElementById('mapCount');
+        if (mapCount) mapCount.textContent = recentSocks.length;
+        recentSocks.forEach(sock => {
+            addSockToMap(sock);
+        });
     });
 }
 
@@ -4352,18 +4587,33 @@ function saveGameScore(gameType, score, country = '🌍 World') {
     }
     
     localStorage.setItem('gameLeaderboards', JSON.stringify(gameLeaderboards));
+    
+    // Save to Firebase (global leaderboard)
+    saveGameScoreToFirebase(gameType, score, country);
+    
     updateLeaderboard(gameType);
 }
 
-function updateLeaderboard(gameType) {
+async function updateLeaderboard(gameType) {
     const leaderboardContent = document.getElementById('leaderboardContent');
     if (!leaderboardContent) return;
     
-    const scores = gameLeaderboards[gameType] || [];
+    // Load global leaderboard from Firebase and merge with local
+    const globalScores = await loadGlobalLeaderboardFromFirebase(gameType, 50);
+    const localScores = gameLeaderboards[gameType] || [];
+    
+    // Merge scores (prioritize global)
+    const allScores = [...globalScores];
+    localScores.forEach(localEntry => {
+        // Add local scores that aren't duplicates
+        if (!allScores.find(s => s.score === localEntry.score && s.country === localEntry.country)) {
+            allScores.push(localEntry);
+        }
+    });
     
     // Group by country and get best score per country
     const countryScores = {};
-    scores.forEach(entry => {
+    allScores.forEach(entry => {
         if (!countryScores[entry.country] || 
             (gameType === 'memory' || gameType === 'wordsearch' ? entry.score < countryScores[entry.country].score : entry.score > countryScores[entry.country].score)) {
             countryScores[entry.country] = entry;
@@ -6159,6 +6409,9 @@ function submitChristmasShare() {
     
     localStorage.setItem('christmasShares', JSON.stringify(christmasShares));
     
+    // Save to Firebase (global sharing)
+    saveChristmasShareToFirebase(share);
+    
     // Reset form
     imageInput.value = '';
     document.getElementById('christmasImagePlaceholder').style.display = 'flex';
@@ -6189,20 +6442,44 @@ function submitChristmasShare() {
     if (soundEnabled) playSound('success');
 }
 
-function loadChristmasShares() {
+async function loadChristmasShares() {
     const feed = document.getElementById('shareChristmasFeed');
     if (!feed) return;
     
+    feed.innerHTML = '<p style="text-align: center; color: rgba(255,255,255,0.5); padding: 1rem;">Loading shares...</p>';
+    
+    // Load global shares from Firebase and merge with local
+    const globalShares = await loadGlobalChristmasSharesFromFirebase(100);
+    const allShares = [...globalShares];
+    
+    // Add local shares that aren't in global list
+    christmasShares.forEach(localShare => {
+        if (!allShares.find(s => s.id === localShare.id)) {
+            allShares.push({
+                ...localShare,
+                timestamp: new Date(localShare.timestamp || localShare.date)
+            });
+        }
+    });
+    
+    // Sort by timestamp (most recent first)
+    allShares.sort((a, b) => {
+        const timeA = a.timestamp instanceof Date ? a.timestamp : new Date(a.timestamp || a.date);
+        const timeB = b.timestamp instanceof Date ? b.timestamp : new Date(b.timestamp || b.date);
+        return timeB - timeA;
+    });
+    
     feed.innerHTML = '';
     
-    if (christmasShares.length === 0) {
+    if (allShares.length === 0) {
         feed.innerHTML = '<p class="empty-feed-message">No shares yet. Be the first to share your Christmas moment! 🎄</p>';
         return;
     }
     
-    christmasShares.forEach(share => {
+    allShares.forEach(share => {
         const item = document.createElement('div');
         item.className = 'share-christmas-item';
+        const time = share.timestamp instanceof Date ? share.timestamp.toLocaleTimeString() : (share.time || '');
         item.innerHTML = `
             <img src="${share.image}" alt="Christmas share" class="share-christmas-item-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Ctext y=\'.9em\' font-size=\'90\'%3E🎄%3C/text%3E%3C/svg%3E'">
             <div class="share-christmas-item-content">
@@ -6211,7 +6488,7 @@ function loadChristmasShares() {
                     <div class="share-christmas-item-location">
                         ${share.location ? `<span>📍 ${share.location}</span>` : '<span>🌍 Unknown Location</span>'}
                     </div>
-                    <div>${share.time}</div>
+                    <div>${time}</div>
                 </div>
             </div>
         `;
