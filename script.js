@@ -5,8 +5,8 @@ let openedDoors = JSON.parse(localStorage.getItem('openedDoors') || '[]');
 let quizAnswers = [];
 let currentQuestion = 0;
 
-// Stats Tracking
-let userStats = JSON.parse(localStorage.getItem('userStats') || '{"cardsCreated": 0, "socksHung": 0, "doorsOpened": 0, "quizzesTaken": 0, "gamesPlayed": 0, "lastDate": "", "cardsToday": 0, "socksToday": 0}');
+// Stats Tracking - Removed localStorage, using in-memory only (or can be moved to Firebase later)
+let userStats = {"cardsCreated": 0, "socksHung": 0, "doorsOpened": 0, "quizzesTaken": 0, "gamesPlayed": 0, "lastDate": "", "cardsToday": 0, "socksToday": 0};
 
 // Music Player
 let musicEnabled = false;
@@ -780,8 +780,6 @@ function initHeroSection() {
             
             // Hide hero and show nav
             document.getElementById('hero').style.display = 'none';
-            const expandableNav = document.getElementById('expandableTabsNav');
-            if (expandableNav) expandableNav.style.display = 'block';
             
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -807,11 +805,8 @@ function initHeroSection() {
                         }
                     });
                     
-                    // Hide hero and show nav
+                    // Hide hero (modern navbar is always visible)
                     document.getElementById('hero').style.display = 'none';
-                    const expandableNav = document.getElementById('expandableTabsNav');
-                    if (expandableNav) expandableNav.style.display = 'block';
-                    
                     // Then start the selected game
                     setTimeout(() => {
                         // Hide games grid
@@ -902,7 +897,7 @@ function checkDailyReset() {
         userStats.socksToday = 0;
         userStats.christmasSharesToday = 0;
         userStats.lastDate = today;
-        localStorage.setItem('userStats', JSON.stringify(userStats));
+        // Stats no longer saved to localStorage (removed)
     }
 }
 
@@ -942,7 +937,7 @@ function incrementStat(statName) {
             userStats.christmasSharesToday = (userStats.christmasSharesToday || 0) + 1;
         }
         
-        localStorage.setItem('userStats', JSON.stringify(userStats));
+        // Stats no longer saved to localStorage (removed)
         updatePageStats();
     } catch (error) {
         console.error('Stat increment error:', error);
@@ -1431,11 +1426,8 @@ function initNavigation() {
                 expandableTabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
                 
-                // Hide hero section and show nav
+                // Hide hero section (modern navbar is always visible)
                 if (hero) hero.style.display = 'none';
-                if (expandableNav) {
-                    expandableNav.style.display = 'block';
-                }
                 
                 if (soundEnabled) playSound('click');
             }
@@ -3993,7 +3985,7 @@ function initSockHanging() {
         // Animate hanging
         setTimeout(() => {
             sockStats.hanging = Math.max(0, sockStats.hanging - 1);
-            localStorage.setItem('sockStats', JSON.stringify(sockStats));
+            // Sock stats no longer saved to localStorage (removed)
             updateStats();
         }, 2000);
 
@@ -4101,9 +4093,8 @@ function updateStats() {
         hangingNowEl.textContent = sockStats.hanging || 0;
     }
     
-    // Update localStorage stats to match reality
+    // Update stats (no longer saved to localStorage)
     sockStats.displayed = actualDisplayed;
-    localStorage.setItem('sockStats', JSON.stringify(sockStats));
 }
 
 function initMap() {
@@ -4366,6 +4357,109 @@ async function getCityNameFromCoordinates(lat, lng) {
     }
 }
 
+// Get user location for games (if not already set)
+async function getUserLocationForGames() {
+    // Return existing location if available
+    if (userLocation) {
+        return userLocation;
+    }
+    
+    // Check if geolocation is available
+    if (!navigator.geolocation) {
+        console.log('Geolocation not supported in this browser');
+        return null;
+    }
+    
+    // Check if we're in a secure context (HTTPS) - required for geolocation
+    if (!window.isSecureContext) {
+        console.warn('Geolocation requires HTTPS. Current connection is not secure.');
+        // Show user-friendly message
+        if (window.confirm('Location access requires a secure connection (HTTPS).\n\nYou are currently using HTTP. Location will default to "World".\n\nTo enable location:\n- Use HTTPS\n- Or deploy to a secure server\n\nClick OK to continue without location.')) {
+            return null;
+        }
+        return null;
+    }
+    
+    // Try to get location
+    return new Promise((resolve) => {
+        // Request location with proper options
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                console.log('Location obtained for games:', userLocation);
+                resolve(userLocation);
+            },
+            (error) => {
+                console.log('Geolocation error for games:', error.message);
+                if (error.code === error.PERMISSION_DENIED) {
+                    console.log('User denied location permission');
+                } else if (error.code === error.POSITION_UNAVAILABLE) {
+                    console.log('Location information unavailable');
+                } else if (error.code === error.TIMEOUT) {
+                    console.log('Location request timed out');
+                } else {
+                    console.log('Unknown geolocation error:', error);
+                }
+                resolve(null);
+            },
+            {
+                enableHighAccuracy: false,
+                timeout: 10000, // 10 seconds timeout
+                maximumAge: 0 // Don't use cached location, always request fresh
+            }
+        );
+    });
+}
+
+// Get country name from location (with reverse geocoding fallback)
+async function getCountryNameForLeaderboard() {
+    let location = await getUserLocationForGames();
+    
+    if (!location) {
+        // Try to get country from IP or use a better fallback
+        try {
+            // Use reverse geocoding API to get country from approximate location
+            // Or we can use a geolocation API service
+            return 'World';
+        } catch (error) {
+            return 'World';
+        }
+    }
+    
+    // Try reverse geocoding first for accurate country (request English names)
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.lat}&lon=${location.lng}&zoom=3&addressdetails=1&accept-language=en`, {
+            headers: {
+                'User-Agent': 'Christmas Magic App'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            if (data.address && data.address.country) {
+                // Convert native country name to English if needed
+                const englishCountry = convertCountryToEnglish(data.address.country);
+                console.log('Country from API:', data.address.country, '→ Converted to:', englishCountry);
+                return englishCountry;
+            }
+        }
+    } catch (error) {
+        console.log('Reverse geocoding failed, using coordinate-based detection:', error);
+    }
+    
+    // Fallback to coordinate-based detection
+    const country = getCountryFromLocation(location.lat, location.lng);
+    const countryName = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🇹🇭|🇲🇾|🇮🇩|🇻🇳|🌍/g, '').trim();
+    console.log('Country from coordinates:', countryName);
+    // Convert to English if needed (should already be in English from getCountryFromLocation)
+    const englishCountry = convertCountryToEnglish(countryName);
+    console.log('Converted country:', englishCountry);
+    return englishCountry || countryName || 'World';
+}
+
 function getCountryFromLocation(lat, lng) {
     // Simple country detection based on coordinates
     // This is a basic approximation - in production, use a reverse geocoding API
@@ -4385,6 +4479,179 @@ function getCountryFromLocation(lat, lng) {
     if (lat >= 10 && lat <= 24 && lng >= 102 && lng <= 110) return '🇻🇳 Vietnam';
     if (lat >= 4 && lat <= 21 && lng >= 92 && lng <= 102) return '🇹🇭 Thailand';
     return '🌍 World';
+}
+
+// Convert native country names to English
+function convertCountryToEnglish(countryName) {
+    if (!countryName || countryName.trim() === '') return 'World';
+    
+    const countryLower = countryName.toLowerCase().trim();
+    
+    // Map native/local country names to English
+    const countryMap = {
+        // Korean
+        '대한민국': 'South Korea',
+        '한국': 'South Korea',
+        // Japanese
+        '日本': 'Japan',
+        // Chinese
+        '中国': 'China',
+        '中华人民共和国': 'China',
+        // Thai
+        'ประเทศไทย': 'Thailand',
+        // Vietnamese
+        'việt nam': 'Vietnam',
+        'vietnam': 'Vietnam',
+        // Indonesian
+        'indonesia': 'Indonesia',
+        // Malay
+        'malaysia': 'Malaysia',
+        // Russian
+        'россия': 'Russia',
+        'российская федерация': 'Russia',
+        // German
+        'deutschland': 'Germany',
+        // French
+        'france': 'France',
+        // Spanish
+        'españa': 'Spain',
+        'méxico': 'Mexico',
+        'mexico': 'Mexico',
+        // Other common variations
+        'united states': 'USA',
+        'united states of america': 'USA',
+        'united kingdom': 'UK',
+        'great britain': 'UK',
+        'korea': 'South Korea',
+        'south korea': 'South Korea'
+    };
+    
+    // Try exact match first (with original case)
+    if (countryMap[countryName]) {
+        return countryMap[countryName];
+    }
+    
+    // Try lowercase match
+    if (countryMap[countryLower]) {
+        return countryMap[countryLower];
+    }
+    
+    // Check if it's already in English (common English country names)
+    const englishCountries = ['Korea', 'South Korea', 'Japan', 'USA', 'United States', 'UK', 'United Kingdom', 
+                              'France', 'Australia', 'Canada', 'Germany', 'Russia', 'China', 'Thailand', 
+                              'Malaysia', 'Indonesia', 'Vietnam', 'Spain', 'Mexico', 'Brazil', 'India'];
+    
+    // First try exact match (case-insensitive)
+    for (const engName of englishCountries) {
+        const engLower = engName.toLowerCase();
+        if (countryLower === engLower) {
+            return engName;
+        }
+    }
+    
+    // Then try partial match
+    for (const engName of englishCountries) {
+        const engLower = engName.toLowerCase();
+        if (countryLower.includes(engLower) || engLower.includes(countryLower)) {
+            // Special case: if input is just "Korea", return "South Korea"
+            if (countryLower === 'korea' && engName === 'South Korea') {
+                return 'South Korea';
+            }
+            return engName;
+        }
+    }
+    
+    // If contains Korean characters, assume it's Korea
+    if (/[가-힣]/.test(countryName)) {
+        return 'South Korea';
+    }
+    
+    // If contains Japanese characters, assume it's Japan
+    if (/[ひらがなカタカナ一-龯]/.test(countryName)) {
+        return 'Japan';
+    }
+    
+    // If contains Chinese characters, could be China, Taiwan, etc.
+    if (/[\u4e00-\u9fff]/.test(countryName)) {
+        // Try to determine based on common patterns
+        if (countryName.includes('中国') || countryName.includes('中华')) {
+            return 'China';
+        }
+        return 'China'; // Default to China for Chinese characters
+    }
+    
+    // Return as-is if it looks like English (contains only letters and spaces)
+    if (/^[a-zA-Z\s]+$/.test(countryName)) {
+        // Capitalize first letter of each word
+        const capitalized = countryName.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+        // If it's a known country name, return it; otherwise try to match
+        for (const engName of englishCountries) {
+            if (capitalized.toLowerCase() === engName.toLowerCase() || 
+                capitalized.toLowerCase().includes(engName.toLowerCase()) ||
+                engName.toLowerCase().includes(capitalized.toLowerCase())) {
+                return engName;
+            }
+        }
+        // Return capitalized version if it looks reasonable
+        return capitalized;
+    }
+    
+    // Last resort: return World
+    return 'World';
+}
+
+// Get flag emoji for country name (without emoji)
+function getCountryFlag(countryName) {
+    if (!countryName || countryName === 'World') return '🌍';
+    
+    // First convert to English if needed
+    const englishCountry = convertCountryToEnglish(countryName);
+    if (englishCountry === 'World') return '🌍';
+    
+    const countryLower = englishCountry.toLowerCase().trim();
+    
+    // Map country names to flag emojis
+    const flagMap = {
+        'korea': '🇰🇷',
+        'south korea': '🇰🇷',
+        'japan': '🇯🇵',
+        'usa': '🇺🇸',
+        'united states': '🇺🇸',
+        'united states of america': '🇺🇸',
+        'uk': '🇬🇧',
+        'united kingdom': '🇬🇧',
+        'france': '🇫🇷',
+        'australia': '🇦🇺',
+        'canada': '🇨🇦',
+        'germany': '🇩🇪',
+        'russia': '🇷🇺',
+        'china': '🇨🇳',
+        'thailand': '🇹🇭',
+        'malaysia': '🇲🇾',
+        'indonesia': '🇮🇩',
+        'vietnam': '🇻🇳',
+        'spain': '🇪🇸',
+        'mexico': '🇲🇽',
+        'brazil': '🇧🇷',
+        'india': '🇮🇳'
+    };
+    
+    // Try exact match first
+    if (flagMap[countryLower]) {
+        return flagMap[countryLower];
+    }
+    
+    // Try partial match (e.g., "Korea" in "South Korea")
+    for (const [key, flag] of Object.entries(flagMap)) {
+        if (countryLower.includes(key) || key.includes(countryLower)) {
+            return flag;
+        }
+    }
+    
+    // Default to world flag
+    return '🌍';
 }
 
 function shareSockImage(sock) {
@@ -4887,11 +5154,9 @@ function initGames() {
                             t.classList.add('active');
                         }
                     });
-                    // Hide hero and show nav
+                    // Hide hero (modern navbar is always visible)
                     const hero = document.getElementById('hero');
-                    const expandableNav = document.getElementById('expandableTabsNav');
                     if (hero) hero.style.display = 'none';
-                    if (expandableNav) expandableNav.style.display = 'block';
                     if (soundEnabled) playSound('click');
                     return;
                 }
@@ -5025,40 +5290,9 @@ function addGameBackButtons() {
     });
 }
 
-// Games Leaderboard System
-let gameLeaderboards = JSON.parse(localStorage.getItem('gameLeaderboards') || '{"trivia": [], "memory": [], "wordsearch": [], "wordle": []}');
-
-function saveGameScore(gameType, score, country = '🌍 World') {
-    if (!gameLeaderboards[gameType]) {
-        gameLeaderboards[gameType] = [];
-    }
-    
-    const entry = {
-        score: score,
-        country: country,
-        date: new Date().toISOString(),
-        timestamp: Date.now()
-    };
-    
-    gameLeaderboards[gameType].push(entry);
-    
-    // Keep top 50 scores per game
-    if (gameLeaderboards[gameType].length > 50) {
-        gameLeaderboards[gameType] = gameLeaderboards[gameType]
-            .sort((a, b) => {
-                // Sort by score (higher is better for most games)
-                if (gameType === 'memory' || gameType === 'wordsearch') {
-                    // Lower is better (fewer moves, less time)
-                    return a.score - b.score;
-                }
-                return b.score - a.score;
-            })
-            .slice(0, 50);
-    }
-    
-    localStorage.setItem('gameLeaderboards', JSON.stringify(gameLeaderboards));
-    
-    // Save to Firebase (global leaderboard)
+// Games Leaderboard System - Firebase only (no localStorage)
+function saveGameScore(gameType, score, country = 'World') {
+    // Save to Firebase (global leaderboard only)
     saveGameScoreToFirebase(gameType, score, country);
     
     updateLeaderboard(gameType);
@@ -5070,40 +5304,30 @@ async function updateLeaderboard(gameType, viewType = 'overall') {
     
     const isDaily = viewType === 'daily';
     
-    // Load global leaderboard from Firebase and merge with local
-    const globalScores = await loadGlobalLeaderboardFromFirebase(gameType, 50, isDaily);
-    const localScores = gameLeaderboards[gameType] || [];
-    
-    // Filter local scores by date if daily
-    let filteredLocalScores = localScores;
-    if (isDaily) {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        filteredLocalScores = localScores.filter(entry => {
-            const entryDate = new Date(entry.timestamp || entry.date);
-            return entryDate >= today && entryDate < tomorrow;
-        });
+    // Load global leaderboard from Firebase only (no localStorage)
+    let allScores = [];
+    try {
+        allScores = await loadGlobalLeaderboardFromFirebase(gameType, 50, isDaily);
+    } catch (error) {
+        console.error('Error loading leaderboard from Firebase:', error);
+        allScores = [];
     }
     
-    // Merge scores (prioritize global)
-    const allScores = [...globalScores];
-    filteredLocalScores.forEach(localEntry => {
-        // Add local scores that aren't duplicates
-        if (!allScores.find(s => s.score === localEntry.score && s.country === localEntry.country && 
-            Math.abs(new Date(s.timestamp || s.date).getTime() - new Date(localEntry.timestamp || localEntry.date).getTime()) < 1000)) {
-            allScores.push(localEntry);
-        }
-    });
-    
     // Group by country and get best score per country
+    // Normalize country names to avoid duplicates (e.g., "Korea" and "South Korea")
     const countryScores = {};
     allScores.forEach(entry => {
-        if (!countryScores[entry.country] || 
-            (gameType === 'memory' || gameType === 'wordsearch' ? entry.score < countryScores[entry.country].score : entry.score > countryScores[entry.country].score)) {
-            countryScores[entry.country] = entry;
+        // Normalize country name to English and standardize variations
+        const normalizedCountry = convertCountryToEnglish(entry.country);
+        const countryKey = normalizedCountry; // Use normalized name as key
+        
+        if (!countryScores[countryKey] || 
+            (gameType === 'memory' || gameType === 'wordsearch' ? entry.score < countryScores[countryKey].score : entry.score > countryScores[countryKey].score)) {
+            // Store with normalized country name
+            countryScores[countryKey] = {
+                ...entry,
+                country: normalizedCountry // Use normalized name
+            };
         }
     });
     
@@ -5126,9 +5350,12 @@ async function updateLeaderboard(gameType, viewType = 'overall') {
     sorted.forEach((entry, index) => {
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
+        // Convert country name to English and get flag
+        const englishCountry = convertCountryToEnglish(entry.country);
+        const flag = getCountryFlag(englishCountry);
         item.innerHTML = `
             <div class="leaderboard-rank">#${index + 1}</div>
-            <div class="leaderboard-country">${entry.country}</div>
+            <div class="leaderboard-country">${flag} ${englishCountry}</div>
             <div class="leaderboard-score">${entry.score}${gameType === 'trivia' ? '%' : gameType === 'memory' ? ' moves' : gameType === 'wordsearch' ? ' words' : ' guesses'}</div>
         `;
         leaderboardContent.appendChild(item);
@@ -5188,6 +5415,31 @@ function initTrivia() {
             return;
         }
         triviaGame.style.display = 'block';
+        
+        // Request location permission when game starts (user interaction context)
+        // Only request if in secure context (HTTPS required for geolocation)
+        if (!userLocation && navigator.geolocation && window.isSecureContext) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    console.log('Location obtained for trivia game');
+                },
+                (error) => {
+                    console.log('Location permission not granted for trivia:', error.message);
+                },
+                {
+                    enableHighAccuracy: false,
+                    timeout: 5000,
+                    maximumAge: 300000
+                }
+            );
+        } else if (!window.isSecureContext) {
+            console.warn('Geolocation requires HTTPS. Using default location for trivia.');
+        }
+        
         triviaScore = 0;
         currentTriviaQ = 0;
         
@@ -5255,9 +5507,10 @@ function showTriviaQuestion() {
             </div>
         `;
         
-        // Save to leaderboard
-        const userCountry = userLocation ? getCountryFromLocation(userLocation.lat, userLocation.lng) : '🌍 World';
-        saveGameScore('trivia', percentage, userCountry);
+        // Save to leaderboard with real location
+        getCountryNameForLeaderboard().then(userCountry => {
+            saveGameScore('trivia', percentage, userCountry);
+        });
         
         // Complete daily challenge
         completeDailyChallenge('trivia');
@@ -5350,6 +5603,30 @@ function initMemory() {
         }
         memoryGame.style.display = 'block';
         grid.innerHTML = '';
+        
+        // Request location permission when game starts (user interaction context)
+        // Only request if in secure context (HTTPS required for geolocation)
+        if (!userLocation && navigator.geolocation && window.isSecureContext) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    console.log('Location obtained for memory game');
+                },
+                (error) => {
+                    console.log('Location permission not granted for memory:', error.message);
+                },
+                {
+                    enableHighAccuracy: false,
+                    timeout: 5000,
+                    maximumAge: 300000
+                }
+            );
+        } else if (!window.isSecureContext) {
+            console.warn('Geolocation requires HTTPS. Using default location for memory.');
+        }
         
         // Get difficulty and timer settings
         const difficulty = document.getElementById('memoryDifficulty')?.value || 'medium';
@@ -5444,9 +5721,10 @@ function initMemory() {
                                 showSuccess('You won! 🎉');
                                 if (soundEnabled) playSound('success');
                                 
-                                // Save to leaderboard
-                                const userCountry = userLocation ? getCountryFromLocation(userLocation.lat, userLocation.lng) : '🌍 World';
-                                saveGameScore('memory', moves, userCountry);
+                                // Save to leaderboard with real location
+                                getCountryNameForLeaderboard().then(userCountry => {
+                                    saveGameScore('memory', moves, userCountry);
+                                });
                                 
                                 // Complete daily challenge
                                 completeDailyChallenge('memory');
@@ -5532,6 +5810,30 @@ function initWordSearch() {
             return;
         }
         wordsearchGame.style.display = 'block';
+        
+        // Request location permission when game starts (user interaction context)
+        // Only request if in secure context (HTTPS required for geolocation)
+        if (!userLocation && navigator.geolocation && window.isSecureContext) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    console.log('Location obtained for word search game');
+                },
+                (error) => {
+                    console.log('Location permission not granted for word search:', error.message);
+                },
+                {
+                    enableHighAccuracy: false,
+                    timeout: 5000,
+                    maximumAge: 300000
+                }
+            );
+        } else if (!window.isSecureContext) {
+            console.warn('Geolocation requires HTTPS. Using default location for word search.');
+        }
         
         const words = getDailyWordSearchWords();
         const gridSize = 15; // Larger grid for more variety
@@ -5831,8 +6133,9 @@ function checkWordSelection(selectedCells, wordPositions, words, foundWords) {
                     wordsearchGame.appendChild(shareBtn);
                     
                     // Save to leaderboard and complete challenge
-                    const userCountry = userLocation ? getCountryFromLocation(userLocation.lat, userLocation.lng) : '🌍 World';
-                    saveGameScore('wordsearch', foundWords.size, userCountry);
+                    getCountryNameForLeaderboard().then(userCountry => {
+                        saveGameScore('wordsearch', foundWords.size, userCountry);
+                    });
                     completeDailyChallenge('wordsearch');
                 }
             }, 500);
@@ -6212,6 +6515,31 @@ function initWordle() {
         }
         
         wordleGame.style.display = 'block';
+        
+        // Request location permission when game starts (user interaction context)
+        // Only request if in secure context (HTTPS required for geolocation)
+        if (!userLocation && navigator.geolocation && window.isSecureContext) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    console.log('Location obtained for wordle game');
+                },
+                (error) => {
+                    console.log('Location permission not granted for wordle:', error.message);
+                },
+                {
+                    enableHighAccuracy: false,
+                    timeout: 5000,
+                    maximumAge: 300000
+                }
+            );
+        } else if (!window.isSecureContext) {
+            console.warn('Geolocation requires HTTPS. Using default location for wordle.');
+        }
+        
         wordleWord = getDailyWord();
         wordleGuesses = [];
         currentGuess = '';
@@ -6423,8 +6751,9 @@ function submitGuess() {
         showSuccess('Congratulations!');
         
         // Save to leaderboard and complete challenge
-        const userCountry = userLocation ? getCountryFromLocation(userLocation.lat, userLocation.lng) : '🌍 World';
-        saveGameScore('wordle', guesses, userCountry);
+        getCountryNameForLeaderboard().then(userCountry => {
+            saveGameScore('wordle', guesses, userCountry);
+        });
         completeDailyChallenge('wordle');
         
         // Confetti effect
@@ -6661,27 +6990,31 @@ function exportMapView() {
 }
 
 // Daily Challenges System
+// Daily Challenges - Removed localStorage (using in-memory only)
+let dailyChallenges = {
+    lastChallengeDate: '',
+    challenges: { trivia: false, memory: false, wordsearch: false, wordle: false, card: false, sock: false }
+};
+
 function initDailyChallenges() {
     const today = new Date().toDateString();
-    const lastChallengeDate = localStorage.getItem('lastChallengeDate');
     
-    if (lastChallengeDate !== today) {
+    if (dailyChallenges.lastChallengeDate !== today) {
         // New day - reset challenges
-        localStorage.setItem('lastChallengeDate', today);
-        localStorage.setItem('dailyChallenges', JSON.stringify({
+        dailyChallenges.lastChallengeDate = today;
+        dailyChallenges.challenges = {
             trivia: false,
             memory: false,
             wordsearch: false,
             wordle: false,
             card: false,
             sock: false
-        }));
+        };
     }
     
     // Show daily challenge indicator
-    const challenges = JSON.parse(localStorage.getItem('dailyChallenges') || '{}');
-    const completedCount = Object.values(challenges).filter(c => c).length;
-    const totalChallenges = Object.keys(challenges).length;
+    const completedCount = Object.values(dailyChallenges.challenges).filter(c => c).length;
+    const totalChallenges = Object.keys(dailyChallenges.challenges).length;
     
     if (completedCount < totalChallenges) {
         // Add challenge badge to games section
@@ -6701,9 +7034,7 @@ function initDailyChallenges() {
 }
 
 function completeDailyChallenge(challengeType) {
-    const challenges = JSON.parse(localStorage.getItem('dailyChallenges') || '{}');
-    challenges[challengeType] = true;
-    localStorage.setItem('dailyChallenges', JSON.stringify(challenges));
+    dailyChallenges.challenges[challengeType] = true;
     initDailyChallenges(); // Refresh display
 }
 

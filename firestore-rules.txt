@@ -9,14 +9,17 @@ service cloud.firestore {
     // Allow write access (you can restrict this later)
     match /socks/{sockId} {
       allow create: if true;
+      allow delete: if true; // Allow delete for cleanup (can be removed for production)
     }
     
     match /christmasShares/{shareId} {
       allow create: if true;
+      allow delete: if true; // Allow delete for cleanup (can be removed for production)
     }
     
     match /leaderboards/{gameType}/scores/{scoreId} {
       allow create: if true;
+      allow delete: if true; // Allow delete for cleanup (can be removed for production)
     }
   }
 }

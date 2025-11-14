@@ -3535,8 +3535,9 @@ body:not(.dark-mode) #wordleHintMessage {
     50% { opacity: 0.3; }
 }
 
-/* Expandable Tabs Navigation - Combined Box Effect */
+/* Expandable Tabs Navigation - Combined Box Effect (Hidden - using modern navbar instead) */
 .expandable-tabs-nav {
+    display: none !important;
     position: sticky;
     top: 0;
     z-index: 1000;
