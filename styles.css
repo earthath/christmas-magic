@@ -7953,9 +7953,28 @@ body:not(.dark-mode) .img-sphere-container {
 
 .sphere-modal-close {
     touch-action: manipulation !important;
-    -webkit-tap-highlight-color: transparent !important;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3) !important;
     pointer-events: auto !important;
-    z-index: 10001 !important;
+    z-index: 10002 !important;
+    position: absolute !important;
+    cursor: pointer !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+.sphere-modal-close:active {
+    background: rgba(0, 0, 0, 0.9) !important;
+    transform: scale(0.95);
+}
+
+/* Ensure button is always on top */
+.sphere-modal-content > div:first-child {
+    position: relative;
+    z-index: 1;
+}
+
+.sphere-modal-content > div:first-child > button {
+    z-index: 10002 !important;
 }
 
 .sphere-modal-content {

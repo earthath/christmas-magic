@@ -7465,30 +7465,36 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 max-height: 90vh;
                 display: flex;
                 flex-direction: column;
+                position: relative;
+                pointer-events: auto;
             ">
-                <div style="position: relative; aspect-ratio: 1;">
-                    <img src="${imageSrc}" alt="Christmas share" style="width: 100%; height: 100%; object-fit: cover;" />
-                    <button class="sphere-modal-close" style="
+                <div style="position: relative; aspect-ratio: 1; pointer-events: none;">
+                    <img src="${imageSrc}" alt="Christmas share" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
+                    <button class="sphere-modal-close" id="sphereModalCloseBtn" style="
                         position: absolute;
                         top: 0.5rem;
                         right: 0.5rem;
-                        width: 40px;
-                        height: 40px;
-                        background: rgba(0, 0, 0, 0.6);
+                        width: 44px;
+                        height: 44px;
+                        min-width: 44px;
+                        min-height: 44px;
+                        background: rgba(0, 0, 0, 0.7);
                         border-radius: 50%;
                         color: white;
-                        border: none;
+                        border: 2px solid rgba(255, 255, 255, 0.3);
                         cursor: pointer;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 24px;
+                        font-size: 28px;
+                        font-weight: bold;
                         line-height: 1;
-                        z-index: 10001;
+                        z-index: 10002;
                         touch-action: manipulation;
-                        -webkit-tap-highlight-color: transparent;
+                        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
                         user-select: none;
                         pointer-events: auto;
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
                     ">×</button>
                 </div>
                 ${shareData ? `
@@ -7554,33 +7560,71 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             </div>
         `;
         
-        // Close button handler - support both click and touch
-        const closeBtn = modal.querySelector('.sphere-modal-close');
-        if (closeBtn) {
-            const closeModal = (e) => {
+        // Close button handler - use multiple event types for mobile compatibility
+        const closeModal = (e) => {
+            if (e) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
+            }
+            console.log('Closing modal'); // Debug log
+            if (modal && modal.parentNode) {
                 modal.remove();
-                selectedImage = null;
-                return false;
-            };
-            
-            closeBtn.addEventListener('click', closeModal);
-            closeBtn.addEventListener('touchend', closeModal);
-        }
+            }
+            selectedImage = null;
+            return false;
+        };
         
-        // Close on background click/touch
+        // Wait for DOM to be ready, then attach handlers
+        setTimeout(() => {
+            const closeBtn = modal.querySelector('.sphere-modal-close') || document.getElementById('sphereModalCloseBtn');
+            if (closeBtn) {
+                console.log('Close button found, attaching handlers'); // Debug log
+                
+                // Remove all existing listeners first
+                const newCloseBtn = closeBtn.cloneNode(true);
+                closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+                
+                // Add multiple event listeners for maximum compatibility
+                newCloseBtn.addEventListener('click', closeModal, { passive: false, capture: true });
+                newCloseBtn.addEventListener('touchend', closeModal, { passive: false, capture: true });
+                newCloseBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, { passive: false, capture: true });
+                // Also try pointer events
+                newCloseBtn.addEventListener('pointerup', closeModal, { passive: false, capture: true });
+                
+                // Direct onclick as ultimate fallback
+                newCloseBtn.onclick = closeModal;
+                newCloseBtn.ontouchend = closeModal;
+                
+                // Make sure button is interactive
+                newCloseBtn.style.pointerEvents = 'auto';
+                newCloseBtn.style.touchAction = 'manipulation';
+                newCloseBtn.style.cursor = 'pointer';
+                
+                console.log('Close button handlers attached'); // Debug log
+            } else {
+                console.error('Close button not found!'); // Debug log
+            }
+        }, 100);
+        
+        // Close on background click/touch - but only if not clicking on content
         const closeOnBackground = (e) => {
-            if (e.target === modal) {
+            // Don't close if clicking on the modal content
+            if (e.target === modal || e.target.classList.contains('sphere-image-modal')) {
                 e.preventDefault();
                 e.stopPropagation();
-                modal.remove();
+                console.log('Closing modal from background'); // Debug log
+                if (modal && modal.parentNode) {
+                    modal.remove();
+                }
                 selectedImage = null;
             }
         };
-        modal.addEventListener('click', closeOnBackground);
-        modal.addEventListener('touchend', closeOnBackground);
+        modal.addEventListener('click', closeOnBackground, { passive: false });
+        modal.addEventListener('touchend', closeOnBackground, { passive: false });
         
         document.body.appendChild(modal);
         
