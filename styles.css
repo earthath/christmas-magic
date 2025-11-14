@@ -1363,9 +1363,22 @@ body:not(.dark-mode) .control-btn:hover {
     .game-container {
         width: 100%;
         max-width: 100%;
-        padding: 1rem;
+        padding: 0.75rem;
         box-sizing: border-box;
         overflow-x: hidden;
+    }
+    
+    /* Word Search Game Container - Extra Constraints */
+    #wordsearchGame {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+        padding: 0.5rem;
+    }
+    
+    #wordsearchGame .game-container {
+        padding: 0.5rem;
     }
     
     .trivia-question {
@@ -1391,19 +1404,22 @@ body:not(.dark-mode) .control-btn:hover {
     
     /* Word Search Mobile Fixes */
     .wordsearch-grid {
-        width: 100%;
-        max-width: 100%;
-        box-sizing: border-box;
-        padding: 0.5rem;
-        gap: 0.15rem;
-        margin: 0.5rem auto;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 0.25rem !important;
+        gap: 0.1rem !important;
+        margin: 0.5rem auto !important;
+        overflow: hidden !important;
     }
     
     .wordsearch-cell {
-        font-size: 0.7rem;
-        min-width: 0;
-        min-height: 0;
-        aspect-ratio: 1;
+        font-size: 0.6rem !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        aspect-ratio: 1 !important;
+        flex-shrink: 0 !important;
+        padding: 0 !important;
     }
     
     .wordsearch-words {
@@ -6523,19 +6539,24 @@ body:not(.dark-mode) .share-copy-btn:hover {
     }
     
     .wordsearch-grid {
-        padding: 0.5rem;
-        gap: 0.15rem;
-        margin: 1rem auto;
-        max-width: 95vw;
-        width: 95vw;
+        padding: 0.25rem !important;
+        gap: 0.1rem !important;
+        margin: 0.5rem auto !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
     }
     
     .wordsearch-cell {
-        font-size: 0.7rem;
-        border-radius: 3px;
-        border-width: 1px;
-        min-width: 0;
-        min-height: 0;
+        font-size: 0.6rem !important;
+        border-radius: 2px !important;
+        border-width: 1px !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        aspect-ratio: 1 !important;
+        flex-shrink: 0 !important;
+        padding: 0 !important;
     }
     
     .wordsearch-words {
@@ -6938,6 +6959,9 @@ body:not(.dark-mode) .share-copy-btn:hover {
     border-radius: 20px;
     padding: 2rem;
     box-shadow: 0 8px 32px var(--shadow-medium);
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
 }
 
 .share-christmas-header {
@@ -7036,8 +7060,8 @@ body:not(.dark-mode) .share-copy-btn:hover {
 
 .share-christmas-feed {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
     max-height: 800px;
     overflow-y: auto;
     padding: 0.5rem;
@@ -7069,13 +7093,13 @@ body:not(.dark-mode) .share-copy-btn:hover {
 
 .share-christmas-item-image {
     width: 100%;
-    height: 250px;
+    height: 140px;
     object-fit: cover;
     display: block;
 }
 
 .share-christmas-item-content {
-    padding: 1.25rem;
+    padding: 1rem;
 }
 
 .share-christmas-item-message {
@@ -7100,6 +7124,10 @@ body:not(.dark-mode) .share-copy-btn:hover {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.share-christmas-item-time {
+    flex-shrink: 0;
 }
 
 .empty-feed-message {
@@ -7134,7 +7162,31 @@ body:not(.dark-mode) .empty-feed-message {
     }
     
     .share-christmas-item-image {
-        height: 200px;
+        height: 120px;
+    }
+    
+    .share-christmas-feed {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .share-christmas-item-content {
+        padding: 0.75rem;
+    }
+    
+    .share-christmas-item-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .share-christmas-item-location {
+        width: 100%;
+    }
+    
+    .share-christmas-item-time {
+        width: 100%;
+        margin-left: 0;
     }
 }
 
@@ -7538,13 +7590,21 @@ body:not(.dark-mode) .leaderboard-view-btn.active {
 }
 
 .leaderboard-country {
-    flex: 1;
+    flex: 0 0 auto;
     font-weight: 500;
+    min-width: 120px;
 }
 
 .leaderboard-score {
     font-weight: 600;
     color: var(--christmas-gold);
+}
+
+.leaderboard-wordle-stats {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
 }
 
 .rankings-title {
@@ -7753,5 +7813,315 @@ body:not(.dark-mode) .leaderboard-view-btn.active {
 
     .ranking-item {
         padding: 0.5rem;
+    }
+}
+
+/* Side-by-Side Container for Sphere and Grid */
+.share-christmas-views-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+@media (max-width: 968px) {
+    .share-christmas-views-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+/* Image Sphere Viewer (21st.dev style) */
+.img-sphere-container {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 600px;
+    flex: 1;
+}
+
+body:not(.dark-mode) .img-sphere-container {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.img-sphere-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.img-sphere-header h3 {
+    font-size: 1.5rem;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.img-sphere-wrapper {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    overflow: hidden;
+    min-height: 500px;
+}
+
+.sphere-grid-container {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 1;
+    margin: 0 auto;
+    overflow: visible;
+}
+
+@media (max-width: 968px) {
+    .share-christmas-views-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .img-sphere-container,
+    .share-christmas-feed-container {
+        min-height: 500px;
+    }
+    
+    .img-sphere-wrapper {
+        min-height: 400px;
+    }
+    
+    .sphere-grid-container {
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 480px) {
+    .img-sphere-container,
+    .share-christmas-feed-container {
+        min-height: 400px;
+    }
+    
+    .img-sphere-wrapper {
+        min-height: 350px;
+        padding: 0.75rem;
+    }
+    
+    .sphere-grid-container {
+        max-width: 350px;
+    }
+}
+
+.sphere-image-item {
+    position: absolute;
+    transition: transform 0.2s ease-out;
+}
+
+.sphere-image-wrapper {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.sphere-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.sphere-image-modal {
+    animation: fadeIn 0.3s ease-out;
+}
+
+.sphere-modal-content {
+    animation: scaleIn 0.3s ease-out;
+}
+
+/* Text wrapping optimizations for sphere modal */
+.sphere-modal-message {
+    word-wrap: break-word !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: pre-wrap !important;
+    hyphens: auto !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.sphere-modal-location span {
+    word-wrap: break-word !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+    display: inline-block !important;
+    max-width: 100% !important;
+    line-height: 1.4 !important;
+}
+
+/* Mobile optimizations for sphere modal */
+@media (max-width: 768px) {
+    .sphere-modal-content {
+        max-width: 95% !important;
+        max-height: 90vh !important;
+        margin: 1rem auto !important;
+    }
+    
+    .sphere-modal-content > div:first-child {
+        max-height: 50vh;
+        overflow: hidden;
+    }
+    
+    .sphere-modal-message {
+        font-size: 0.95rem !important;
+        line-height: 1.5 !important;
+        padding: 0 !important;
+        margin: 0 0 1rem 0 !important;
+    }
+    
+    .sphere-modal-content > div:last-child {
+        padding: 1rem !important;
+    }
+    
+    .sphere-modal-footer {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.5rem !important;
+    }
+    
+    .sphere-modal-location {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .sphere-modal-location span {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+        display: block !important;
+        width: 100% !important;
+    }
+    
+    .sphere-modal-time {
+        font-size: 0.85rem !important;
+        margin-left: 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .sphere-modal-content {
+        max-width: 98% !important;
+        margin: 0.5rem auto !important;
+    }
+    
+    .sphere-modal-message {
+        font-size: 0.9rem !important;
+        line-height: 1.4 !important;
+    }
+    
+    .sphere-modal-content > div:last-child {
+        padding: 0.75rem !important;
+    }
+    
+    .sphere-modal-location span {
+        font-size: 0.85rem !important;
+    }
+    
+    .sphere-modal-time {
+        font-size: 0.8rem !important;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.img-sphere-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    gap: 1rem;
+}
+
+.sphere-info {
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+    flex-grow: 1;
+    text-align: center;
+}
+
+.sphere-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.sphere-nav-btn {
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', sans-serif;
+}
+
+body:not(.dark-mode) .sphere-nav-btn {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1a1a1a;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+.sphere-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--christmas-gold);
+}
+
+body:not(.dark-mode) .sphere-nav-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+    border-color: var(--christmas-gold);
+}
+
+@media (max-width: 640px) {
+    .img-sphere-container {
+        padding: 1rem;
+    }
+    .img-sphere-header h3 {
+        font-size: 1.2rem;
+    }
+    .sphere-nav-btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    .img-sphere-controls {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .sphere-info {
+        flex-basis: 100%;
+        margin-bottom: 0.5rem;
     }
 }

@@ -438,6 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initControlMenu();
         initShareModal();
         initDailyChallenges();
+        initImageSphere();
         initShareChristmas();
         initHowButton();
     } catch (error) {
@@ -716,30 +717,30 @@ function initHeroSection() {
             
             const section = btn.dataset.section;
             if (section) {
-                switchSection(section);
-                
-                // Update expandable tabs
-                const expandableTabs = document.querySelectorAll('.expandable-tab');
-                expandableTabs.forEach(tab => {
-                    tab.classList.remove('active');
-                    if (tab.dataset.section === section) {
-                        tab.classList.add('active');
-                    }
-                });
-                
-                // Hide hero (navbar is always visible now)
-                document.getElementById('hero').style.display = 'none';
-                
-                // Initialize map if going to sock-hanging
-                if (section === 'sock-hanging' && !map) {
-                    setTimeout(() => {
-                        initMap();
-                        loadSocksOnMap();
-                    }, 300);
+            switchSection(section);
+            
+            // Update expandable tabs
+            const expandableTabs = document.querySelectorAll('.expandable-tab');
+            expandableTabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.section === section) {
+                    tab.classList.add('active');
                 }
-                
-                // Scroll to top
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+                // Hide hero (navbar is always visible now)
+            document.getElementById('hero').style.display = 'none';
+            
+            // Initialize map if going to sock-hanging
+            if (section === 'sock-hanging' && !map) {
+                setTimeout(() => {
+                    initMap();
+                    loadSocksOnMap();
+                }, 300);
+            }
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     });
@@ -1670,8 +1671,8 @@ function initCardMaker() {
     if (cardBorder) {
         cardBorder.addEventListener('change', (e) => {
             // Always set border to none regardless of checkbox state
-            cardPreview.style.border = 'none';
-            cardPreview.style.boxShadow = 'none';
+                cardPreview.style.border = 'none';
+                cardPreview.style.boxShadow = 'none';
             saveCardState();
         });
     }
@@ -3916,12 +3917,12 @@ function initSockHanging() {
                 const countryName = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🇹🇭|🇲🇾|🇮🇩|🇻🇳|🌍/g, '').trim();
                 
                 // Format: "City, Country" (e.g., "Seoul, Korea" or "Bangkok, Thailand")
-                location = {
+            location = {
                     name: cityName ? `${cityName}, ${countryName}` : `${countryName}`,
                     country: countryName, // Save country name WITHOUT emoji
-                    lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
-                    lng: userLocation.lng + (Math.random() - 0.5) * 0.01
-                };
+                lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
+                lng: userLocation.lng + (Math.random() - 0.5) * 0.01
+            };
             } catch (error) {
                 console.error('Error getting city name:', error);
                 // Fallback to country name if reverse geocoding fails
@@ -3962,7 +3963,7 @@ function initSockHanging() {
         incrementStat('socksHung');
         completeDailyChallenge('sock');
         sockStats.hanging = Math.min(3, sockStats.hanging + 1);
-        
+
         // Country rankings will be calculated from Firebase data - no need to store separately
         // Rankings are calculated dynamically from sockData in renderRankings()
 
@@ -4051,9 +4052,9 @@ function initSockHanging() {
             // Stats based ONLY on Firebase data
             sockStats.displayed = sockData.length;
             sockStats.total = sockData.length;
-            
+
             // DO NOT save to localStorage - Firebase is the source of truth
-            
+
             // Update UI
             updateStats();
             loadSocksOnMap();
@@ -4192,11 +4193,11 @@ function loadSocksOnMap() {
 
         // Show recent socks on map (up to 50)
         const recentSocks = allSocks.slice(0, 50);
-        const mapCount = document.getElementById('mapCount');
+    const mapCount = document.getElementById('mapCount');
         if (mapCount) mapCount.textContent = recentSocks.length;
 
-        recentSocks.forEach(sock => {
-            addSockToMap(sock);
+    recentSocks.forEach(sock => {
+        addSockToMap(sock);
         });
     }).catch(() => {
         // Fallback to local socks only
@@ -5304,15 +5305,112 @@ async function updateLeaderboard(gameType, viewType = 'overall') {
     
     const isDaily = viewType === 'daily';
     
+    // For Wordle, we need all scores to calculate percentages
+    const limit = gameType === 'wordle' ? 1000 : 50;
+    
     // Load global leaderboard from Firebase only (no localStorage)
     let allScores = [];
     try {
-        allScores = await loadGlobalLeaderboardFromFirebase(gameType, 50, isDaily);
+        allScores = await loadGlobalLeaderboardFromFirebase(gameType, limit, isDaily);
     } catch (error) {
         console.error('Error loading leaderboard from Firebase:', error);
         allScores = [];
     }
     
+    // Special handling for Wordle: Calculate percentage of players who got 1 guess
+    if (gameType === 'wordle') {
+        // Group all scores by country
+        const countryStats = {};
+        
+        allScores.forEach(entry => {
+            const normalizedCountry = convertCountryToEnglish(entry.country);
+            const countryKey = normalizedCountry;
+            
+            if (!countryStats[countryKey]) {
+                countryStats[countryKey] = {
+                    country: normalizedCountry,
+                    total: 0,
+                    oneGuess: 0
+                };
+            }
+            
+            countryStats[countryKey].total++;
+            if (entry.score === 1) {
+                countryStats[countryKey].oneGuess++;
+            }
+        });
+        
+        // Simple ranking: Count of players who got 1 guess
+        // Higher number of 1-guess players = higher rank
+        const countryRankings = Object.values(countryStats)
+            .filter(stat => stat.oneGuess > 0) // Only show countries with at least 1 player who got it in 1 guess
+            .map(stat => ({
+                country: stat.country,
+                percentage: (stat.oneGuess / stat.total) * 100,
+                oneGuess: stat.oneGuess,
+                total: stat.total
+            }))
+            .sort((a, b) => {
+                // Primary sort: number of players who got 1 guess (descending)
+                if (a.oneGuess !== b.oneGuess) {
+                    return b.oneGuess - a.oneGuess;
+                }
+                // Secondary sort: if same count, prefer higher percentage
+                if (Math.abs(a.percentage - b.percentage) > 0.1) {
+                    return b.percentage - a.percentage;
+                }
+                // Tertiary sort: if same percentage, prefer larger total sample
+                return b.total - a.total;
+            })
+            .slice(0, 10);
+        
+        leaderboardContent.innerHTML = '';
+        
+        if (countryRankings.length === 0) {
+            const message = isDaily 
+                ? 'No scores today yet. Play to get on the daily leaderboard!' 
+                : allScores.length === 0
+                    ? 'No scores yet. Play to get on the leaderboard!'
+                    : 'Not enough data yet. Need at least 5 players per country to show rankings.';
+            leaderboardContent.innerHTML = `<div class="empty-state-message" style="text-align: center; padding: 2rem;">${message}</div>`;
+            return;
+        }
+        
+        countryRankings.forEach((entry, index) => {
+            try {
+                const item = document.createElement('div');
+                item.className = 'leaderboard-item';
+                const englishCountry = convertCountryToEnglish(entry.country);
+                const flag = getCountryFlag(englishCountry);
+                
+                // Create progress bar
+                const percentage = Math.round(entry.percentage * 10) / 10; // Round to 1 decimal
+                
+                item.innerHTML = `
+                    <div class="leaderboard-rank">#${index + 1}</div>
+                    <div class="leaderboard-country">${flag} ${englishCountry}</div>
+                    <div class="leaderboard-wordle-stats" style="flex: 1; margin-left: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                            <div style="flex: 1; background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px; overflow: hidden;">
+                                <div style="background: linear-gradient(90deg, #4CAF50 0%, #8BC34A 100%); height: 100%; width: ${percentage}%; transition: width 0.3s ease; border-radius: 10px;"></div>
+                            </div>
+                            <div style="font-weight: 600; color: var(--christmas-gold); min-width: 60px; text-align: right;">${percentage}%</div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: rgba(255,255,255,0.6); text-align: center;">
+                            ${entry.oneGuess} player${entry.oneGuess !== 1 ? 's' : ''} got it in 1 guess (${Math.round(entry.percentage * 10) / 10}%)
+                        </div>
+                    </div>
+                `;
+                leaderboardContent.appendChild(item);
+            } catch (error) {
+                console.error('Error creating leaderboard item:', error);
+            }
+        });
+        
+        return;
+    }
+    
+    // Original logic for other games
     // Group by country and get best score per country
     // Normalize country names to avoid duplicates (e.g., "Korea" and "South Korea")
     const countryScores = {};
@@ -5384,13 +5482,23 @@ function initLeaderboard() {
             leaderboardTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             currentLeaderboardGame = tab.dataset.game;
+            
+            // Show leaderboard and games grid when clicking a tab
+            const leaderboard = document.getElementById('gamesLeaderboard');
+            if (leaderboard) leaderboard.style.display = 'block';
+            const gamesGrid = document.querySelector('.games-grid');
+            if (gamesGrid) gamesGrid.style.display = 'grid';
+            // Hide any active game
+            document.querySelectorAll('.game-container').forEach(c => c.style.display = 'none');
+            currentGame = null;
+            
             updateLeaderboard(currentLeaderboardGame, currentLeaderboardView);
         });
     });
     
     // Show leaderboard directly below games grid (no button needed)
-    const leaderboard = document.getElementById('gamesLeaderboard');
-    if (leaderboard) {
+            const leaderboard = document.getElementById('gamesLeaderboard');
+            if (leaderboard) {
         // Only show when games grid is visible
         const gamesGrid = document.querySelector('.games-grid');
         if (gamesGrid && gamesGrid.style.display !== 'none') {
@@ -5509,7 +5617,7 @@ function showTriviaQuestion() {
         
         // Save to leaderboard with real location
         getCountryNameForLeaderboard().then(userCountry => {
-            saveGameScore('trivia', percentage, userCountry);
+        saveGameScore('trivia', percentage, userCountry);
         });
         
         // Complete daily challenge
@@ -5723,7 +5831,7 @@ function initMemory() {
                                 
                                 // Save to leaderboard with real location
                                 getCountryNameForLeaderboard().then(userCountry => {
-                                    saveGameScore('memory', moves, userCountry);
+                                saveGameScore('memory', moves, userCountry);
                                 });
                                 
                                 // Complete daily challenge
@@ -5836,7 +5944,9 @@ function initWordSearch() {
         }
         
         const words = getDailyWordSearchWords();
-        const gridSize = 15; // Larger grid for more variety
+        // Use smaller grid on mobile devices
+        const isMobile = window.innerWidth <= 768;
+        const gridSize = isMobile ? 8 : 15; // Much smaller grid for mobile (8x8), larger for desktop
         const grid = [];
         const wordPositions = {}; // Track where words are placed with direction
         let foundWords = new Set();
@@ -5851,12 +5961,16 @@ function initWordSearch() {
             }
         }
         
-        // Directions: horizontal, vertical, diagonal (down-right), diagonal (down-left)
+        // All 8 directions for maximum variety
         const directions = [
             {dr: 0, dc: 1},   // Horizontal (right)
+            {dr: 0, dc: -1},  // Horizontal (left)
             {dr: 1, dc: 0},   // Vertical (down)
+            {dr: -1, dc: 0},  // Vertical (up)
             {dr: 1, dc: 1},   // Diagonal (down-right)
-            {dr: 1, dc: -1}   // Diagonal (down-left)
+            {dr: 1, dc: -1},  // Diagonal (down-left)
+            {dr: -1, dc: 1},  // Diagonal (up-right)
+            {dr: -1, dc: -1}  // Diagonal (up-left)
         ];
         
         // Place words in various directions
@@ -6134,7 +6248,7 @@ function checkWordSelection(selectedCells, wordPositions, words, foundWords) {
                     
                     // Save to leaderboard and complete challenge
                     getCountryNameForLeaderboard().then(userCountry => {
-                        saveGameScore('wordsearch', foundWords.size, userCountry);
+                    saveGameScore('wordsearch', foundWords.size, userCountry);
                     });
                     completeDailyChallenge('wordsearch');
                 }
@@ -6752,7 +6866,7 @@ function submitGuess() {
         
         // Save to leaderboard and complete challenge
         getCountryNameForLeaderboard().then(userCountry => {
-            saveGameScore('wordle', guesses, userCountry);
+        saveGameScore('wordle', guesses, userCountry);
         });
         completeDailyChallenge('wordle');
         
@@ -7089,7 +7203,660 @@ function initMobileOptimizations() {
 // Initialize empty - will be populated ONLY from Firebase (no localStorage, no demo data)
 let christmasShares = [];
 
+// Image Sphere Grid Viewer (3D Sphere of Images)
+let sphereGridViewer = null;
+let sphereImages = [];
+
+function initImageSphere() {
+    // No close button needed - sphere view is always visible now
+    // Just initialize when needed
+}
+
+// Sphere Math Utilities
+const SPHERE_MATH = {
+    degreesToRadians: (degrees) => degrees * (Math.PI / 180),
+    radiansToDegrees: (radians) => radians * (180 / Math.PI),
+    sphericalToCartesian: (radius, theta, phi) => ({
+        x: radius * Math.sin(phi) * Math.cos(theta),
+        y: radius * Math.cos(phi),
+        z: radius * Math.sin(phi) * Math.sin(theta)
+    }),
+    normalizeAngle: (angle) => {
+        while (angle > 180) angle -= 360;
+        while (angle < -180) angle += 360;
+        return angle;
+    }
+};
+
+// Create 3D Sphere Grid Viewer
+function createSphereGridViewer(images, containerElement, sharesData = null) {
+    if (!containerElement || !images || images.length === 0) {
+        console.error('Invalid parameters for sphere grid viewer');
+        return null;
+    }
+    
+    // Map images to share data for modal display
+    const imageToShareMap = {};
+    if (sharesData && sharesData.length === images.length) {
+        images.forEach((img, index) => {
+            imageToShareMap[img] = sharesData[index];
+        });
+    }
+    
+    // Configuration
+    const CONFIG = {
+        containerSize: 600,
+        sphereRadius: 200,
+        dragSensitivity: 0.8,
+        momentumDecay: 0.96,
+        maxRotationSpeed: 6,
+        baseImageScale: 0.15,
+        hoverScale: 1.3,
+        perspective: 1000,
+        autoRotate: true,
+        autoRotateSpeed: 0.2
+    };
+    
+    // State
+    let rotation = { x: 15, y: 15, z: 0 };
+    let velocity = { x: 0, y: 0 };
+    let isDragging = false;
+    let lastMousePos = { x: 0, y: 0 };
+    let hoveredIndex = null;
+    let selectedImage = null;
+    let animationFrameId = null;
+    let mouseDownPos = { x: 0, y: 0 };
+    let hasDragged = false;
+    
+    // Generate sphere positions using Fibonacci distribution
+    function generateSpherePositions() {
+        const positions = [];
+        const imageCount = images.length;
+        const goldenRatio = (1 + Math.sqrt(5)) / 2;
+        const angleIncrement = 2 * Math.PI / goldenRatio;
+        
+        for (let i = 0; i < imageCount; i++) {
+            const t = i / imageCount;
+            const inclination = Math.acos(1 - 2 * t);
+            const azimuth = angleIncrement * i;
+            
+            let phi = inclination * (180 / Math.PI);
+            let theta = (azimuth * (180 / Math.PI)) % 360;
+            
+            const poleBonus = Math.pow(Math.abs(phi - 90) / 90, 0.6) * 35;
+            if (phi < 90) {
+                phi = Math.max(5, phi - poleBonus);
+            } else {
+                phi = Math.min(175, phi + poleBonus);
+            }
+            
+            phi = 15 + (phi / 180) * 150;
+            
+            const randomOffset = (Math.random() - 0.5) * 20;
+            theta = (theta + randomOffset) % 360;
+            phi = Math.max(0, Math.min(180, phi + (Math.random() - 0.5) * 10));
+            
+            positions.push({ theta, phi, radius: CONFIG.sphereRadius });
+        }
+        
+        return positions;
+    }
+    
+    const imagePositions = generateSpherePositions();
+    const baseImageSize = CONFIG.containerSize * CONFIG.baseImageScale;
+    
+    // Calculate world positions
+    function calculateWorldPositions() {
+        return imagePositions.map((pos, index) => {
+            const thetaRad = SPHERE_MATH.degreesToRadians(pos.theta);
+            const phiRad = SPHERE_MATH.degreesToRadians(pos.phi);
+            const rotXRad = SPHERE_MATH.degreesToRadians(rotation.x);
+            const rotYRad = SPHERE_MATH.degreesToRadians(rotation.y);
+            
+            let x = pos.radius * Math.sin(phiRad) * Math.cos(thetaRad);
+            let y = pos.radius * Math.cos(phiRad);
+            let z = pos.radius * Math.sin(phiRad) * Math.sin(thetaRad);
+            
+            // Apply Y-axis rotation
+            const x1 = x * Math.cos(rotYRad) + z * Math.sin(rotYRad);
+            const z1 = -x * Math.sin(rotYRad) + z * Math.cos(rotYRad);
+            x = x1;
+            z = z1;
+            
+            // Apply X-axis rotation
+            const y2 = y * Math.cos(rotXRad) - z * Math.sin(rotXRad);
+            const z2 = y * Math.sin(rotXRad) + z * Math.cos(rotXRad);
+            y = y2;
+            z = z2;
+            
+            const fadeZoneStart = -10;
+            const fadeZoneEnd = -30;
+            const isVisible = z > fadeZoneEnd;
+            let fadeOpacity = 1;
+            if (z <= fadeZoneStart) {
+                fadeOpacity = Math.max(0, (z - fadeZoneEnd) / (fadeZoneStart - fadeZoneEnd));
+            }
+            
+            const distanceFromCenter = Math.sqrt(x * x + y * y);
+            const maxDistance = CONFIG.sphereRadius;
+            const distanceRatio = Math.min(distanceFromCenter / maxDistance, 1);
+            const centerScale = Math.max(0.3, 1 - distanceRatio * 0.7);
+            const depthScale = (z + CONFIG.sphereRadius) / (2 * CONFIG.sphereRadius);
+            const scale = centerScale * Math.max(0.5, 0.8 + depthScale * 0.3);
+            
+            return { x, y, z, scale, zIndex: Math.round(1000 + z), isVisible, fadeOpacity, originalIndex: index };
+        });
+    }
+    
+    // Render images
+    function render() {
+        const worldPositions = calculateWorldPositions();
+        containerElement.innerHTML = '';
+        
+        worldPositions.forEach((pos, index) => {
+            if (!pos.isVisible) return;
+            
+            const image = images[index];
+            if (!image) return;
+            
+            const imageSize = baseImageSize * pos.scale;
+            const isHovered = hoveredIndex === index;
+            const finalScale = isHovered ? Math.min(1.2, 1.2 / pos.scale) : 1;
+            
+            const imgDiv = document.createElement('div');
+            imgDiv.className = 'sphere-image-item';
+            imgDiv.dataset.imageIndex = index;
+            // Center the sphere in the container - use actual container dimensions
+            // Since container uses padding-bottom: 100%, width and height are the same
+            const containerSize = containerElement.offsetWidth || containerElement.clientWidth || CONFIG.containerSize;
+            const centerX = containerSize / 2;
+            const centerY = containerSize / 2;
+            imgDiv.style.cssText = `
+                position: absolute;
+                width: ${imageSize}px;
+                height: ${imageSize}px;
+                left: ${centerX + pos.x}px;
+                top: ${centerY + pos.y}px;
+                opacity: ${pos.fadeOpacity};
+                transform: translate(-50%, -50%) scale(${finalScale});
+                z-index: ${pos.zIndex};
+                cursor: pointer;
+                transition: transform 0.2s ease-out;
+                pointer-events: auto;
+            `;
+            
+            imgDiv.innerHTML = `
+                <div class="sphere-image-wrapper">
+                    <img src="${image}" alt="Christmas share" loading="${index < 3 ? 'eager' : 'lazy'}" draggable="false" />
+                </div>
+            `;
+            
+            imgDiv.addEventListener('mouseenter', () => { hoveredIndex = index; render(); });
+            imgDiv.addEventListener('mouseleave', () => { hoveredIndex = null; render(); });
+            
+            // Prevent container drag when clicking on image
+            imgDiv.addEventListener('mousedown', (e) => {
+                e.stopPropagation(); // Prevent container drag from starting
+            });
+            
+            // Click handler to show modal
+            imgDiv.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent container drag from interfering
+                e.preventDefault();
+                e.stopImmediatePropagation(); // Prevent other handlers
+                console.log('Image clicked, showing modal'); // Debug log
+                selectedImage = image;
+                const shareData = imageToShareMap[image] || null;
+                showImageModal(image, shareData);
+                return false;
+            }, true); // Use capture phase
+            // Prevent image drag
+            const img = imgDiv.querySelector('img');
+            if (img) {
+                img.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                });
+            }
+            
+            containerElement.appendChild(imgDiv);
+        });
+    }
+    
+    // Show image modal
+    function showImageModal(imageSrc, shareData = null) {
+        console.log('showImageModal called', imageSrc, shareData); // Debug log
+        
+        // Remove any existing modal first
+        const existingModal = document.querySelector('.sphere-image-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        const modal = document.createElement('div');
+        modal.className = 'sphere-image-modal';
+        modal.style.cssText = `
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s ease-out;
+            overflow-y: auto;
+        `;
+        
+        const time = shareData && shareData.timestamp 
+            ? (shareData.timestamp instanceof Date 
+                ? shareData.timestamp.toLocaleTimeString() 
+                : (shareData.time || ''))
+            : '';
+        
+        modal.innerHTML = `
+            <div class="sphere-modal-content" style="
+                background: white;
+                border-radius: 12px;
+                max-width: 500px;
+                width: 100%;
+                overflow: hidden;
+                animation: scaleIn 0.3s ease-out;
+                margin: auto;
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+            ">
+                <div style="position: relative; aspect-ratio: 1;">
+                    <img src="${imageSrc}" alt="Christmas share" style="width: 100%; height: 100%; object-fit: cover;" />
+                    <button class="sphere-modal-close" style="
+                        position: absolute;
+                        top: 0.5rem;
+                        right: 0.5rem;
+                        width: 32px;
+                        height: 32px;
+                        background: rgba(0, 0, 0, 0.5);
+                        border-radius: 50%;
+                        color: white;
+                        border: none;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 20px;
+                        line-height: 1;
+                        z-index: 10;
+                    ">×</button>
+                </div>
+                ${shareData ? `
+                    <div style="padding: 1.5rem; overflow-y: auto; flex: 1; min-width: 0;">
+                        ${shareData.message ? `
+                            <p class="sphere-modal-message" style="
+                                color: #1a1a1a;
+                                font-size: 1rem;
+                                line-height: 1.6;
+                                margin: 0 0 1rem 0;
+                                padding: 0;
+                                word-wrap: break-word;
+                                overflow-wrap: anywhere;
+                                word-break: break-word;
+                                white-space: pre-wrap;
+                                max-width: 100%;
+                                box-sizing: border-box;
+                            ">${shareData.message}</p>
+                        ` : ''}
+                        <div class="sphere-modal-footer" style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            padding-top: 1rem;
+                            border-top: 1px solid rgba(0, 0, 0, 0.1);
+                            font-size: 0.85rem;
+                            color: rgba(0, 0, 0, 0.6);
+                            flex-wrap: wrap;
+                            gap: 0.75rem;
+                            width: 100%;
+                            box-sizing: border-box;
+                        ">
+                            <div class="sphere-modal-location" style="
+                                display: flex;
+                                align-items: flex-start;
+                                gap: 0.5rem;
+                                flex: 1;
+                                min-width: 0;
+                                max-width: 100%;
+                            ">
+                                ${shareData.location ? `
+                                    <span style="
+                                        word-wrap: break-word;
+                                        overflow-wrap: anywhere;
+                                        word-break: break-word;
+                                        white-space: normal;
+                                        display: inline-block;
+                                        max-width: 100%;
+                                        line-height: 1.4;
+                                    ">📍 ${shareData.location}</span>
+                                ` : '<span>🌍 Unknown Location</span>'}
+                            </div>
+                            ${time ? `
+                                <div class="sphere-modal-time" style="
+                                    flex-shrink: 0;
+                                    white-space: nowrap;
+                                    margin-left: auto;
+                                ">${time}</div>
+                            ` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        
+        modal.querySelector('.sphere-modal-close').addEventListener('click', () => {
+            modal.remove();
+            selectedImage = null;
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+                selectedImage = null;
+            }
+        });
+        
+        document.body.appendChild(modal);
+        
+        // Force modal to be visible
+        requestAnimationFrame(() => {
+            modal.style.display = 'flex';
+            console.log('Modal appended and displayed'); // Debug log
+        });
+    }
+    
+    // Event handlers
+    function handleMouseDown(e) {
+        // Don't start dragging if clicking on an image
+        if (e.target.closest('.sphere-image-item')) {
+            return;
+        }
+        isDragging = true;
+        hasDragged = false;
+        velocity = { x: 0, y: 0 };
+        lastMousePos = { x: e.clientX, y: e.clientY };
+        mouseDownPos = { x: e.clientX, y: e.clientY };
+        containerElement.style.cursor = 'grabbing';
+    }
+    
+    function handleMouseMove(e) {
+        if (!isDragging) return;
+        
+        // Check if user has actually dragged (moved more than a few pixels)
+        const dragDistance = Math.sqrt(
+            Math.pow(e.clientX - mouseDownPos.x, 2) + 
+            Math.pow(e.clientY - mouseDownPos.y, 2)
+        );
+        if (dragDistance > 5) {
+            hasDragged = true;
+        }
+        
+        const deltaX = e.clientX - lastMousePos.x;
+        const deltaY = e.clientY - lastMousePos.y;
+        
+        const rotationDelta = {
+            x: -deltaY * CONFIG.dragSensitivity,
+            y: deltaX * CONFIG.dragSensitivity
+        };
+        
+        rotation = {
+            x: SPHERE_MATH.normalizeAngle(rotation.x + Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, rotationDelta.x))),
+            y: SPHERE_MATH.normalizeAngle(rotation.y + Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, rotationDelta.y))),
+            z: rotation.z
+        };
+        
+        velocity = {
+            x: Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, rotationDelta.x)),
+            y: Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, rotationDelta.y))
+        };
+        
+        lastMousePos = { x: e.clientX, y: e.clientY };
+        render();
+    }
+    
+    function handleMouseUp() {
+        isDragging = false;
+        containerElement.style.cursor = 'grab';
+    }
+    
+    function handleTouchStart(e) {
+        // Don't start dragging if touching an image
+        if (e.target.closest('.sphere-image-item')) {
+            // Handle image click on touch
+            const imgItem = e.target.closest('.sphere-image-item');
+            if (imgItem) {
+                const img = imgItem.querySelector('img');
+                if (img && img.src) {
+                    selectedImage = img.src;
+                    const shareData = imageToShareMap[img.src] || null;
+                    showImageModal(img.src, shareData);
+                }
+            }
+            return;
+        }
+        e.preventDefault();
+        const touch = e.touches[0];
+        isDragging = true;
+        velocity = { x: 0, y: 0 };
+        lastMousePos = { x: touch.clientX, y: touch.clientY };
+    }
+    
+    function handleTouchMove(e) {
+        if (!isDragging) return;
+        e.preventDefault();
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - lastMousePos.x;
+        const deltaY = touch.clientY - lastMousePos.y;
+        
+        const rotationDelta = {
+            x: -deltaY * CONFIG.dragSensitivity,
+            y: deltaX * CONFIG.dragSensitivity
+        };
+        
+        rotation = {
+            x: SPHERE_MATH.normalizeAngle(rotation.x + Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, rotationDelta.x))),
+            y: SPHERE_MATH.normalizeAngle(rotation.y + Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, rotationDelta.y))),
+            z: rotation.z
+        };
+        
+        velocity = {
+            x: Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, rotationDelta.x)),
+            y: Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, rotationDelta.y))
+        };
+        
+        lastMousePos = { x: touch.clientX, y: touch.clientY };
+        render();
+    }
+    
+    function handleTouchEnd() {
+        isDragging = false;
+    }
+    
+    // Momentum and auto-rotation
+    function updateMomentum() {
+        if (isDragging) return;
+        
+        velocity = {
+            x: velocity.x * CONFIG.momentumDecay,
+            y: velocity.y * CONFIG.momentumDecay
+        };
+        
+        if (!CONFIG.autoRotate && Math.abs(velocity.x) < 0.01 && Math.abs(velocity.y) < 0.01) {
+            velocity = { x: 0, y: 0 };
+        }
+        
+        let newY = rotation.y;
+        if (CONFIG.autoRotate) {
+            newY += CONFIG.autoRotateSpeed;
+        }
+        newY += Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, velocity.y));
+        
+        rotation = {
+            x: SPHERE_MATH.normalizeAngle(rotation.x + Math.max(-CONFIG.maxRotationSpeed, Math.min(CONFIG.maxRotationSpeed, velocity.x))),
+            y: SPHERE_MATH.normalizeAngle(newY),
+            z: rotation.z
+        };
+        
+        render();
+    }
+    
+    // Setup container - calculate size based on wrapper dimensions
+    // Wait for container to be rendered to get actual size
+    const wrapper = containerElement.parentElement;
+    let actualContainerSize = 500; // Default
+    
+    // Calculate size based on wrapper width (accounting for padding)
+    const calculateSize = () => {
+        if (wrapper) {
+            const wrapperWidth = wrapper.clientWidth || wrapper.offsetWidth;
+            const padding = 48; // 1.5rem * 2 = 3rem = 48px
+            const availableWidth = wrapperWidth - padding;
+            // Use 95% of available width to fill the container
+            actualContainerSize = Math.min(availableWidth * 0.95, 800);
+            // Ensure minimum size
+            actualContainerSize = Math.max(actualContainerSize, 400);
+        }
+        
+        // Ensure container fills the wrapper and is square
+        containerElement.style.cssText = `
+            position: relative;
+            width: 100% !important;
+            height: 0 !important;
+            padding-bottom: 100% !important;
+            perspective: ${CONFIG.perspective}px;
+            cursor: grab;
+            user-select: none;
+            overflow: visible;
+        `;
+        
+        // Wait for layout to calculate actual size
+        setTimeout(() => {
+            const renderedWidth = containerElement.offsetWidth || containerElement.clientWidth || actualContainerSize;
+            const renderedHeight = containerElement.offsetHeight || containerElement.clientHeight || renderedWidth;
+            CONFIG.containerSize = Math.min(renderedWidth, renderedHeight);
+            
+            // Re-render with correct size
+            render();
+        }, 0);
+    };
+    
+    // Calculate size after container is rendered
+    requestAnimationFrame(() => {
+        calculateSize();
+    });
+    
+    // Also recalculate on window resize
+    const resizeHandler = () => {
+        calculateSize();
+    };
+    window.addEventListener('resize', resizeHandler);
+    
+    // Initial size for first render
+    CONFIG.containerSize = actualContainerSize;
+    
+    // Add event listeners
+    containerElement.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    containerElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    
+    // Animation loop
+    function animate() {
+        updateMomentum();
+        animationFrameId = requestAnimationFrame(animate);
+    }
+    animate();
+    
+    // Initial render
+    render();
+    
+    // Cleanup function
+    function cleanup() {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
+        window.removeEventListener('resize', resizeHandler);
+    }
+    
+    return { cleanup, render };
+}
+
+function showSphereView() {
+    const container = document.getElementById('imgSphereContainer');
+    const gridContainer = document.getElementById('sphereGridContainer');
+    if (!container || !gridContainer) return;
+    
+    // Get all shares with images (keep full share data, not just image URLs)
+    const sharesWithImages = christmasShares.filter(share => share.image);
+    
+    if (sharesWithImages.length === 0) {
+        // Show empty state in sphere container
+        gridContainer.innerHTML = `
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+                color: rgba(255, 255, 255, 0.5);
+                padding: 2rem;
+            ">
+                <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">No images yet</p>
+                <p style="font-size: 0.9rem;">Share your first Christmas moment above!</p>
+            </div>
+        `;
+        const infoSpan = document.getElementById('sphereInfo');
+        if (infoSpan) {
+            infoSpan.innerHTML = `<span id="sphereImageCount">0</span> images`;
+        }
+        return;
+    }
+    
+    // Extract just image URLs for the sphere viewer
+    sphereImages = sharesWithImages.map(share => share.image);
+    
+    // Show container
+    container.style.display = 'block';
+    
+    // Update info
+    const infoSpan = document.getElementById('sphereInfo');
+    if (infoSpan) {
+        infoSpan.innerHTML = `<span id="sphereImageCount">${sharesWithImages.length}</span> images`;
+    }
+    
+    // Clean up previous viewer
+    if (sphereGridViewer && sphereGridViewer.cleanup) {
+        sphereGridViewer.cleanup();
+    }
+    
+    // Wait for container to be visible
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            // Pass full shares data so we can show message and location in modal
+            sphereGridViewer = createSphereGridViewer(sphereImages, gridContainer, sharesWithImages);
+        }, 100);
+    });
+}
+
 function initShareChristmas() {
+    // Initialize sphere view automatically when section loads
+    const container = document.getElementById('imgSphereContainer');
+    if (container) {
+        // Show sphere view by default
+        container.style.display = 'block';
+    }
+    
     const form = document.getElementById('shareChristmasForm');
     const imageInput = document.getElementById('christmasImage');
     const imageBtn = document.getElementById('christmasImageBtn');
@@ -7104,8 +7871,13 @@ function initShareChristmas() {
     const getLocationBtn = document.getElementById('getCurrentLocationBtn');
     
     // Load shares ONLY from Firebase - no localStorage
+    // Stats will be updated automatically after loadChristmasShares() completes
     loadChristmasShares();
-    updateShareChristmasStats();
+    
+    // Initialize sphere view after loading shares
+    setTimeout(() => {
+        showSphereView();
+    }, 500);
     
     // Image upload
     if (imageBtn) {
@@ -7222,34 +7994,34 @@ function initShareChristmas() {
                     
                     // Use async IIFE to handle await
                     (async () => {
-                        try {
-                            const lat = position.coords.latitude;
-                            const lng = position.coords.longitude;
-                            console.log('Location received:', lat, lng);
-                            
+                    try {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        console.log('Location received:', lat, lng);
+                        
                             // Get real city name from coordinates using reverse geocoding
                             const cityName = await getCityNameFromCoordinates(lat, lng);
-                            const country = getCountryFromLocation(lat, lng);
+                        const country = getCountryFromLocation(lat, lng);
                             const countryName = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🇹🇭|🇲🇾|🇮🇩|🇻🇳|🌍/g, '').trim();
                             
                             // Format: "City, Country" (e.g., "Seoul, Korea" or "Bangkok, Thailand")
                             const locationText = cityName ? `${cityName}, ${countryName}` : `${countryName}`;
-                            locationInput.value = locationText;
-                            
-                            if (locationStatus) {
-                                locationStatus.textContent = `📍 ${locationText}`;
-                                locationStatus.style.color = 'var(--christmas-gold)';
-                            }
-                            showSuccess('Location detected!');
-                            if (soundEnabled) playSound('success');
-                        } catch (error) {
-                            console.error('Location processing error:', error);
-                            if (locationStatus) {
-                                locationStatus.textContent = '❌ Error processing location. Please try again.';
-                                locationStatus.style.color = 'var(--christmas-red)';
-                            }
-                            showError('Error processing location. Please try again.');
+                        locationInput.value = locationText;
+                        
+                        if (locationStatus) {
+                            locationStatus.textContent = `📍 ${locationText}`;
+                            locationStatus.style.color = 'var(--christmas-gold)';
                         }
+                        showSuccess('Location detected!');
+                        if (soundEnabled) playSound('success');
+                    } catch (error) {
+                        console.error('Location processing error:', error);
+                        if (locationStatus) {
+                            locationStatus.textContent = '❌ Error processing location. Please try again.';
+                            locationStatus.style.color = 'var(--christmas-red)';
+                        }
+                        showError('Error processing location. Please try again.');
+                    }
                     })();
                 },
                 (error) => {
@@ -7368,19 +8140,19 @@ function handleChristmasImageFile(file) {
     // Compress image before displaying
     compressImage(file, maxDimension, maxDimension, quality)
         .then((compressedBase64) => {
-            const imagePreviewImg = document.getElementById('christmasImagePreviewImg');
-            
-            if (imagePreviewImg) {
+        const imagePreviewImg = document.getElementById('christmasImagePreviewImg');
+        
+        if (imagePreviewImg) {
                 imagePreviewImg.src = compressedBase64;
                 // Store compressed image in data attribute for later use
                 imagePreviewImg.dataset.compressedImage = compressedBase64;
-            }
-            if (imagePreview) {
-                imagePreview.style.display = 'block';
-            }
-            if (imagePlaceholder) {
-                imagePlaceholder.style.display = 'none';
-            }
+        }
+        if (imagePreview) {
+            imagePreview.style.display = 'block';
+        }
+        if (imagePlaceholder) {
+            imagePlaceholder.style.display = 'none';
+        }
         })
         .catch((error) => {
             console.error('Image compression error:', error);
@@ -7475,32 +8247,32 @@ async function submitChristmasShare() {
         }
         
         // Reset form only after successful save
-        imageInput.value = '';
-        document.getElementById('christmasImagePlaceholder').style.display = 'flex';
-        document.getElementById('christmasImagePreview').style.display = 'none';
-        if (messageInput) messageInput.value = '';
-        if (locationInput) locationInput.value = '';
-        document.getElementById('christmasMessageCounter').textContent = '0 / 200';
-        
-        // Reset location status
-        const locationStatus = document.getElementById('locationStatus');
-        if (locationStatus) {
-            locationStatus.textContent = 'Click button below to get your location';
-            locationStatus.style.color = 'rgba(255, 255, 255, 0.7)';
-        }
-        
+    imageInput.value = '';
+    document.getElementById('christmasImagePlaceholder').style.display = 'flex';
+    document.getElementById('christmasImagePreview').style.display = 'none';
+    if (messageInput) messageInput.value = '';
+    if (locationInput) locationInput.value = '';
+    document.getElementById('christmasMessageCounter').textContent = '0 / 200';
+    
+    // Reset location status
+    const locationStatus = document.getElementById('locationStatus');
+    if (locationStatus) {
+        locationStatus.textContent = 'Click button below to get your location';
+        locationStatus.style.color = 'rgba(255, 255, 255, 0.7)';
+    }
+    
         // Wait a moment for Firebase to process, then reload feed
         setTimeout(async () => {
             await loadChristmasShares();
-            updateShareChristmasStats();
+    updateShareChristmasStats();
         }, 1000);
         
-        if (typeof incrementStat === 'function') {
-            incrementStat('christmasShares');
-        }
-        
-        showSuccess('Your Christmas moment has been shared! 🎄');
-        if (soundEnabled) playSound('success');
+    if (typeof incrementStat === 'function') {
+        incrementStat('christmasShares');
+    }
+    
+    showSuccess('Your Christmas moment has been shared! 🎄');
+    if (soundEnabled) playSound('success');
     } catch (error) {
         console.error('Error submitting Christmas share:', error);
         showError('Failed to share. Please try again.');
@@ -7543,6 +8315,9 @@ async function loadChristmasShares() {
     
     if (christmasShares.length === 0) {
         feed.innerHTML = '<p class="empty-feed-message">No shares yet. Be the first to share your Christmas moment! 🎄</p>';
+        // Hide sphere view button if no shares
+        const showSphereViewBtn = document.getElementById('showSphereViewBtn');
+        if (showSphereViewBtn) showSphereViewBtn.style.display = 'none';
         return;
     }
     
@@ -7558,12 +8333,18 @@ async function loadChristmasShares() {
                     <div class="share-christmas-item-location">
                         ${share.location ? `<span>📍 ${share.location}</span>` : '<span>🌍 Unknown Location</span>'}
                     </div>
-                    <div>${time}</div>
+                    <div class="share-christmas-item-time">${time}</div>
                 </div>
             </div>
         `;
         feed.appendChild(item);
     });
+    
+    // Update sphere view after loading shares
+    showSphereView();
+    
+    // Update stats after loading shares
+    updateShareChristmasStats();
 }
 
 function updateShareChristmasStats() {
@@ -7571,12 +8352,30 @@ function updateShareChristmasStats() {
     const shareChristmasTotal = document.getElementById('shareChristmasTotal');
     const shareChristmasToday = document.getElementById('shareChristmasToday');
     
-    const today = new Date().toLocaleDateString();
-    const todayShares = christmasShares.filter(share => share.date === today).length;
+    // Calculate today's shares by comparing dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
     
+    const todayShares = christmasShares.filter(share => {
+        if (!share.timestamp) return false;
+        const shareDate = share.timestamp instanceof Date 
+            ? share.timestamp 
+            : new Date(share.timestamp);
+        shareDate.setHours(0, 0, 0, 0);
+        return shareDate.getTime() === today.getTime();
+    }).length;
+    
+    // Update total shares
     if (totalShares) totalShares.textContent = christmasShares.length;
-    if (shareChristmasTotal) shareChristmasTotal.textContent = userStats.christmasShares || 0;
-    if (shareChristmasToday) shareChristmasToday.textContent = userStats.christmasSharesToday || 0;
+    
+    // Update page stats
+    if (shareChristmasTotal) shareChristmasTotal.textContent = christmasShares.length;
+    if (shareChristmasToday) shareChristmasToday.textContent = todayShares;
+    
+    console.log('Share stats updated:', {
+        total: christmasShares.length,
+        today: todayShares
+    });
 }
 
 // How Button (in Control Bar)
@@ -7622,7 +8421,10 @@ function showHowModal() {
             <p>Generate Secret Santa pairs for your gift exchange. Add participants manually or use auto-generation!</p>
             
             <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">🎮 Games</h4>
-            <p>Play Christmas-themed games: Trivia, Memory, Word Search, and Wordle. Challenge yourself with different difficulty levels!</p>
+            <p><strong>❓ Christmas Trivia:</strong> Answer multiple-choice questions about Christmas. Choose difficulty (Easy/Medium/Hard) and optional timer. Score points for correct answers!</p>
+            <p><strong>🧠 Memory Game:</strong> Match pairs of Christmas symbols by clicking cards. Remember their positions and match all pairs with the fewest moves possible!</p>
+            <p><strong>🔍 Word Search:</strong> Find hidden Christmas words in a grid. Click and drag to select letters horizontally, vertically, or diagonally. Find all words to win!</p>
+            <p><strong>🎯 Christmas Wordle:</strong> Guess the 5-letter Christmas word in 6 tries. Green = correct letter & position, Yellow = correct letter wrong position, Gray = not in word. Use hints if needed!</p>
             
             <h4 style="color: var(--christmas-gold); margin-top: 1rem; margin-bottom: 0.5rem;">📸 Share Christmas</h4>
             <p>Upload your Christmas photos with a message and location. Share your holiday moments with the world!</p>

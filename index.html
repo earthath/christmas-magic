@@ -27,6 +27,8 @@
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
     <!-- Canvas Confetti Library -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- Three.js for Image Sphere Viewer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- Leaflet and html2canvas loaded dynamically when needed -->
 </head>
 <body>
@@ -1094,16 +1096,38 @@ Schitt's Creek, PA 24216</textarea>
                     </form>
                 </div>
                 
-                <!-- Feed Display -->
-                <div class="share-christmas-feed-container">
-                    <div class="share-christmas-header">
-                        <h3>🎄 Christmas Moments</h3>
-                        <div class="share-christmas-stats" id="shareChristmasStats">
-                            <span id="totalShares">0</span> shares
+                <!-- Side-by-Side View: Sphere (Left) and Grid (Right) -->
+                <div class="share-christmas-views-container">
+                    <!-- Image Sphere View (Left) -->
+                    <div class="img-sphere-container" id="imgSphereContainer">
+                        <div class="img-sphere-header">
+                            <h3>🌐 3D Sphere View</h3>
+                            <div class="share-christmas-stats" id="shareChristmasStats">
+                                <span id="totalShares">0</span> shares
+                            </div>
+                        </div>
+                        <div class="img-sphere-wrapper" id="imgSphereWrapper">
+                            <div class="sphere-grid-container" id="sphereGridContainer">
+                                <div style="text-align: center; color: rgba(255, 255, 255, 0.5); padding: 3rem;">
+                                    <p>Loading images...</p>
+                                </div>
+                            </div>
+                            <div class="img-sphere-controls">
+                                <div class="sphere-info" id="sphereInfo">
+                                    <span id="sphereImageCount">0</span> images
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="share-christmas-feed" id="shareChristmasFeed">
-                        <p class="empty-feed-message">No shares yet. Be the first to share your Christmas moment! 🎄</p>
+                    
+                    <!-- Card/Grid View (Right) -->
+                    <div class="share-christmas-feed-container" id="shareChristmasFeedContainer">
+                        <div class="share-christmas-header">
+                            <h3>📋 Grid View</h3>
+                        </div>
+                        <div class="share-christmas-feed" id="shareChristmasFeed">
+                            <p class="empty-feed-message">No shares yet. Be the first to share your Christmas moment! 🎄</p>
+                        </div>
                     </div>
                 </div>
             </div>
