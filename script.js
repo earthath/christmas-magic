@@ -7472,9 +7472,9 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                         position: absolute;
                         top: 0.5rem;
                         right: 0.5rem;
-                        width: 32px;
-                        height: 32px;
-                        background: rgba(0, 0, 0, 0.5);
+                        width: 40px;
+                        height: 40px;
+                        background: rgba(0, 0, 0, 0.6);
                         border-radius: 50%;
                         color: white;
                         border: none;
@@ -7482,9 +7482,13 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 20px;
+                        font-size: 24px;
                         line-height: 1;
-                        z-index: 10;
+                        z-index: 10001;
+                        touch-action: manipulation;
+                        -webkit-tap-highlight-color: transparent;
+                        user-select: none;
+                        pointer-events: auto;
                     ">×</button>
                 </div>
                 ${shareData ? `
@@ -7550,16 +7554,33 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             </div>
         `;
         
-        modal.querySelector('.sphere-modal-close').addEventListener('click', () => {
-            modal.remove();
-            selectedImage = null;
-        });
-        modal.addEventListener('click', (e) => {
+        // Close button handler - support both click and touch
+        const closeBtn = modal.querySelector('.sphere-modal-close');
+        if (closeBtn) {
+            const closeModal = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                modal.remove();
+                selectedImage = null;
+                return false;
+            };
+            
+            closeBtn.addEventListener('click', closeModal);
+            closeBtn.addEventListener('touchend', closeModal);
+        }
+        
+        // Close on background click/touch
+        const closeOnBackground = (e) => {
             if (e.target === modal) {
+                e.preventDefault();
+                e.stopPropagation();
                 modal.remove();
                 selectedImage = null;
             }
-        });
+        };
+        modal.addEventListener('click', closeOnBackground);
+        modal.addEventListener('touchend', closeOnBackground);
         
         document.body.appendChild(modal);
         

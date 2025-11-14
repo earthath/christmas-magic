@@ -7948,6 +7948,14 @@ body:not(.dark-mode) .img-sphere-container {
 
 .sphere-image-modal {
     animation: fadeIn 0.3s ease-out;
+    touch-action: manipulation;
+}
+
+.sphere-modal-close {
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: transparent !important;
+    pointer-events: auto !important;
+    z-index: 10001 !important;
 }
 
 .sphere-modal-content {
