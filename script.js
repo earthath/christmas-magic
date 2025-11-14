@@ -110,13 +110,17 @@ async function saveChristmasShareToFirebase(share) {
         
         // Check image size (base64 can be large)
         const base64Size = share.image.length * 0.75; // Approximate size in bytes
-        if (base64Size > 10 * 1024 * 1024) { // 10MB limit
-            showError('Image is too large. Please use a smaller image (max 10MB).');
+        if (base64Size > 2 * 1024 * 1024) { // 2MB limit for mobile optimization
+            showError('Image is too large. Please use a smaller image (max 2MB).');
             return false;
         }
         
-        // Store image in Firestore (base64) - Note: For large images, consider using Firebase Storage
-        const docRef = await window.db.collection('christmasShares').add({
+        // Detect mobile for timeout adjustment
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const timeoutDuration = isMobile ? 20000 : 30000; // 20s for mobile, 30s for desktop
+        
+        // Add timeout for mobile networks
+        const uploadPromise = window.db.collection('christmasShares').add({
             image: share.image,
             message: share.message || null,
             location: share.location || 'Unknown Location',
@@ -125,17 +129,34 @@ async function saveChristmasShareToFirebase(share) {
             createdAt: new Date().toISOString()
         });
         
+        // Add timeout wrapper
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Upload timeout. Please check your connection and try again.')), timeoutDuration);
+        });
+        
+        const docRef = await Promise.race([uploadPromise, timeoutPromise]);
+        
         console.log('Christmas share saved to Firebase with ID:', docRef.id);
         return true;
     } catch (error) {
         console.error('Error saving Christmas share to Firebase:', error);
-        if (error.code === 'permission-denied') {
-            showError('Permission denied. Please check Firebase security rules.');
-        } else if (error.code === 'unavailable') {
-            showError('Firebase is unavailable. Please check your connection.');
+        let errorMessage = 'Failed to upload. ';
+        
+        if (error.message && error.message.includes('timeout')) {
+            errorMessage = 'Upload timed out. Please check your internet connection and try again.';
+        } else if (error.code === 'permission-denied') {
+            errorMessage = 'Permission denied. Please check Firebase security rules.';
+        } else if (error.code === 'unavailable' || error.code === 'deadline-exceeded') {
+            errorMessage = 'Connection timeout. Please check your internet connection and try again.';
+        } else if (error.code === 'failed-precondition') {
+            errorMessage = 'Service temporarily unavailable. Please try again in a moment.';
+        } else if (error.message) {
+            errorMessage += error.message;
         } else {
-            showError('Failed to save to Firebase: ' + (error.message || 'Unknown error'));
+            errorMessage += 'Please check your connection and try again.';
         }
+        
+        showError(errorMessage);
         return false;
     }
 }
@@ -6694,34 +6715,113 @@ function initShareChristmas() {
     }
 }
 
+// Compress and resize image for mobile optimization
+function compressImage(file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                // Calculate new dimensions
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = (height * maxWidth) / width;
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxHeight) {
+                        width = (width * maxHeight) / height;
+                        height = maxHeight;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to base64 with quality compression
+                let compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                
+                // If still too large, reduce quality further
+                if (compressedBase64.length > 2 * 1024 * 1024) { // 2MB base64 limit
+                    compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+                }
+                
+                // If still too large, reduce quality even more
+                if (compressedBase64.length > 2 * 1024 * 1024) {
+                    compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+                }
+                
+                resolve(compressedBase64);
+            };
+            img.onerror = reject;
+            img.src = e.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
 function handleChristmasImageFile(file) {
     if (!file.type.startsWith('image/')) {
         showError('Please select an image file.');
         return;
     }
     
-    if (file.size > 5 * 1024 * 1024) {
-        showError('Image size should be less than 5MB.');
-        return;
+    // Show loading state
+    const imagePlaceholder = document.getElementById('christmasImagePlaceholder');
+    const imagePreview = document.getElementById('christmasImagePreview');
+    if (imagePlaceholder) {
+        imagePlaceholder.innerHTML = '<p>Compressing image...</p>';
     }
     
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const imagePreview = document.getElementById('christmasImagePreview');
-        const imagePreviewImg = document.getElementById('christmasImagePreviewImg');
-        const imagePlaceholder = document.getElementById('christmasImagePlaceholder');
-        
-        if (imagePreviewImg) {
-            imagePreviewImg.src = e.target.result;
-        }
-        if (imagePreview) {
-            imagePreview.style.display = 'block';
-        }
-        if (imagePlaceholder) {
-            imagePlaceholder.style.display = 'none';
-        }
-    };
-    reader.readAsDataURL(file);
+    // Detect mobile device and use smaller dimensions
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const maxDimension = isMobile ? 1280 : 1920; // Smaller for mobile
+    const quality = isMobile ? 0.7 : 0.8; // Lower quality for mobile
+    
+    // Compress image before displaying
+    compressImage(file, maxDimension, maxDimension, quality)
+        .then((compressedBase64) => {
+            const imagePreviewImg = document.getElementById('christmasImagePreviewImg');
+            
+            if (imagePreviewImg) {
+                imagePreviewImg.src = compressedBase64;
+                // Store compressed image in data attribute for later use
+                imagePreviewImg.dataset.compressedImage = compressedBase64;
+            }
+            if (imagePreview) {
+                imagePreview.style.display = 'block';
+            }
+            if (imagePlaceholder) {
+                imagePlaceholder.style.display = 'none';
+            }
+        })
+        .catch((error) => {
+            console.error('Image compression error:', error);
+            showError('Failed to process image. Please try a different image.');
+            if (imagePlaceholder) {
+                imagePlaceholder.innerHTML = `
+                    <span class="upload-icon">📷</span>
+                    <p>Click or drag image here</p>
+                    <button type="button" class="upload-btn" id="christmasImageBtn">Choose Image</button>
+                `;
+                // Re-initialize button click handler
+                const imageBtn = document.getElementById('christmasImageBtn');
+                const imageInput = document.getElementById('christmasImage');
+                if (imageBtn && imageInput) {
+                    imageBtn.addEventListener('click', () => {
+                        imageInput.click();
+                    });
+                }
+            }
+        });
 }
 
 async function submitChristmasShare() {
@@ -6745,21 +6845,34 @@ async function submitChristmasShare() {
         return;
     }
     
+    // Get compressed image if available, otherwise use original
+    let imageData = '';
+    if (imagePreviewImg) {
+        // Use compressed image if available, otherwise use the src
+        imageData = imagePreviewImg.dataset.compressedImage || imagePreviewImg.src;
+    }
+    
+    if (!imageData || imageData === '') {
+        showError('Please upload an image.');
+        return;
+    }
+    
+    // Check image size before upload
+    const base64Size = imageData.length * 0.75; // Approximate size in bytes
+    if (base64Size > 2 * 1024 * 1024) { // 2MB limit for mobile
+        showError('Image is still too large after compression. Please try a smaller image.');
+        return;
+    }
+    
     const share = {
         id: Date.now(),
-        image: imagePreviewImg ? imagePreviewImg.src : '',
+        image: imageData,
         message: messageInput ? messageInput.value.trim() : '',
         location: locationInput ? locationInput.value.trim() : '',
         timestamp: new Date().toISOString(),
         date: new Date().toLocaleDateString(),
         time: new Date().toLocaleTimeString()
     };
-    
-    // Validate image
-    if (!share.image || share.image === '') {
-        showError('Please upload an image.');
-        return;
-    }
     
     // Show loading state
     const submitBtn = document.querySelector('#shareChristmasForm button[type="submit"]');

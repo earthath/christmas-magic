@@ -1540,6 +1540,17 @@ body:not(.dark-mode) .control-btn:hover {
     color: #FFFFFF;
     line-height: 1.1;
     letter-spacing: -0.02em;
+    font-family: 'Poppins', 'Rethink Sans', 'Onest', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.title-italic {
+    font-style: italic;
+    font-weight: 700;
+}
+
+.title-regular {
+    font-style: normal;
+    font-weight: 700;
 }
 
 .hero-subtitle {
