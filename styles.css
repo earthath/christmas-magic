@@ -7951,6 +7951,13 @@ body:not(.dark-mode) .img-sphere-container {
     touch-action: manipulation;
 }
 
+.sphere-image-modal[data-modal-active="false"],
+.sphere-image-modal:not([data-modal-active]) {
+    display: none !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
 .sphere-modal-close {
     touch-action: manipulation !important;
     -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3) !important;
