@@ -414,6 +414,7 @@ const quizResults = {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     try {
+        initModernNavbar();
         initNavigation();
         initHeroSection();
         initFlowingMenu();
@@ -726,10 +727,8 @@ function initHeroSection() {
                     }
                 });
                 
-                // Hide hero and show nav
+                // Hide hero (navbar is always visible now)
                 document.getElementById('hero').style.display = 'none';
-                const expandableNav = document.getElementById('expandableTabsNav');
-                if (expandableNav) expandableNav.style.display = 'block';
                 
                 // Initialize map if going to sock-hanging
                 if (section === 'sock-hanging' && !map) {
@@ -1202,6 +1201,174 @@ function initMusicPlayer() {
     } catch (error) {
         console.error('Music player error:', error);
     }
+}
+
+// Modern Navigation Bar
+function initModernNavbar() {
+    const modernNavbar = document.getElementById('modernNavbar');
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const navbarLogoLink = document.getElementById('navbarLogoLink');
+    const hero = document.getElementById('hero');
+    
+    // Mobile menu toggle
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', () => {
+            modernNavbar.classList.toggle('active');
+            mobileMenuToggle.classList.toggle('active');
+        });
+    }
+    
+    // Logo click - go to home
+    if (navbarLogoLink) {
+        navbarLogoLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            
+            // Reset game state
+            document.querySelectorAll('.game-container').forEach(c => c.style.display = 'none');
+            const gamesGrid = document.querySelector('.games-grid');
+            if (gamesGrid) gamesGrid.style.display = 'grid';
+            const leaderboard = document.getElementById('gamesLeaderboard');
+            if (leaderboard) leaderboard.style.display = 'block';
+            currentGame = null;
+            if (gameKeyboardHandler) {
+                document.removeEventListener('keydown', gameKeyboardHandler);
+                gameKeyboardHandler = null;
+            }
+            
+            // Show hero section
+            if (hero) {
+                hero.style.display = 'flex';
+                hero.style.textAlign = 'center';
+            }
+            
+            // Close mobile menu
+            if (modernNavbar) modernNavbar.classList.remove('active');
+            if (mobileMenuToggle) mobileMenuToggle.classList.remove('active');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if (soundEnabled) playSound('click');
+        });
+    }
+    
+    // Dropdown items click handlers
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const section = item.dataset.section;
+            if (section) {
+                switchSection(section);
+                
+                // Hide hero and show section
+                if (hero) hero.style.display = 'none';
+                
+                // Close mobile menu
+                if (modernNavbar) modernNavbar.classList.remove('active');
+                if (mobileMenuToggle) mobileMenuToggle.classList.remove('active');
+                
+                // Close dropdown
+                const dropdown = item.closest('.nav-item.dropdown');
+                if (dropdown) dropdown.classList.remove('active');
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                if (soundEnabled) playSound('click');
+            }
+        });
+    });
+    
+    // Regular nav links (non-dropdown)
+    const regularNavLinks = document.querySelectorAll('.nav-link[data-section]:not(.dropdown .nav-link)');
+    regularNavLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = link.dataset.section;
+            if (section) {
+                switchSection(section);
+                
+                // Hide hero and show section
+                if (hero) hero.style.display = 'none';
+                
+                // Close mobile menu
+                if (modernNavbar) modernNavbar.classList.remove('active');
+                if (mobileMenuToggle) mobileMenuToggle.classList.remove('active');
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                if (soundEnabled) playSound('click');
+            }
+        });
+    });
+    
+    // CTA button
+    const navCtaBtn = document.querySelector('.nav-cta-btn');
+    if (navCtaBtn) {
+        navCtaBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = navCtaBtn.dataset.section;
+            if (section) {
+                switchSection(section);
+                
+                // Hide hero and show section
+                if (hero) hero.style.display = 'none';
+                
+                // Close mobile menu
+                if (modernNavbar) modernNavbar.classList.remove('active');
+                if (mobileMenuToggle) mobileMenuToggle.classList.remove('active');
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                if (soundEnabled) playSound('click');
+            }
+        });
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.nav-item.dropdown')) {
+            document.querySelectorAll('.nav-item.dropdown').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+    });
+    
+    // Handle dropdown toggle on mobile
+    const dropdownButtons = document.querySelectorAll('.nav-item.dropdown .nav-link');
+    dropdownButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (window.innerWidth <= 968) {
+                e.preventDefault();
+                e.stopPropagation();
+                const dropdown = btn.closest('.nav-item.dropdown');
+                const isActive = dropdown.classList.contains('active');
+                
+                // Close all other dropdowns
+                document.querySelectorAll('.nav-item.dropdown').forEach(item => {
+                    if (item !== dropdown) {
+                        item.classList.remove('active');
+                    }
+                });
+                
+                // Toggle current dropdown
+                dropdown.classList.toggle('active');
+            }
+        });
+    });
+    
+    // Ensure dropdown menus are clickable
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        menu.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    });
 }
 
 // Expandable Tabs Navigation
@@ -4365,8 +4532,33 @@ function initGiftExchange() {
         const autoGenerateBtn = document.getElementById('autoGenerate');
         const participantCount = document.getElementById('participantCount');
         const generatorType = document.getElementById('generatorType');
+        const incrementBtn = document.getElementById('incrementCount');
+        const decrementBtn = document.getElementById('decrementCount');
         
         if (!addBtn) return;
+        
+        // Number input increment/decrement handlers
+        if (incrementBtn && participantCount) {
+            incrementBtn.addEventListener('click', () => {
+                const current = parseInt(participantCount.value) || 5;
+                const max = parseInt(participantCount.max) || 50;
+                if (current < max) {
+                    participantCount.value = current + 1;
+                    participantCount.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+        }
+        
+        if (decrementBtn && participantCount) {
+            decrementBtn.addEventListener('click', () => {
+                const current = parseInt(participantCount.value) || 5;
+                const min = parseInt(participantCount.min) || 2;
+                if (current > min) {
+                    participantCount.value = current - 1;
+                    participantCount.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+        }
         
         // Nicknames pool for auto-generation
         const nicknames = [
@@ -4570,6 +4762,58 @@ function initGiftExchange() {
 }
 
 // Firework/Candy Bomb Effect
+// Confetti Effect (21st.dev Magic UI style)
+function createConfettiEffect(container) {
+    if (typeof confetti === 'undefined') {
+        // Fallback if confetti library not loaded
+        createFireworkEffect(container);
+        return;
+    }
+    
+    const rect = container ? container.getBoundingClientRect() : { left: 0, top: 0, width: window.innerWidth, height: window.innerHeight };
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    
+    // Create confetti burst
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { x, y },
+        colors: ['#FFB81C', '#C8102E', '#0F5132', '#FF6B6B', '#4ECDC4', '#FFE66D', '#FFFFFF'],
+        shapes: ['circle', 'square'],
+        gravity: 0.8,
+        ticks: 200
+    });
+    
+    // Additional burst after delay
+    setTimeout(() => {
+        confetti({
+            particleCount: 50,
+            angle: 60,
+            spread: 55,
+            origin: { x, y },
+            colors: ['#FFB81C', '#C8102E', '#0F5132'],
+            shapes: ['circle'],
+            gravity: 0.8,
+            ticks: 150
+        });
+    }, 250);
+    
+    setTimeout(() => {
+        confetti({
+            particleCount: 50,
+            angle: 120,
+            spread: 55,
+            origin: { x, y },
+            colors: ['#FFB81C', '#C8102E', '#0F5132'],
+            shapes: ['circle'],
+            gravity: 0.8,
+            ticks: 150
+        });
+    }, 400);
+}
+
+// Legacy firework effect (fallback)
 function createFireworkEffect(container) {
     const fireworks = ['🎆', '✨', '🎉', '🎊', '⭐', '🌟', '💫', '🎁', '🍬', '🍭', '🍪', '🎄'];
     const colors = ['#FFB81C', '#C8102E', '#0F5132', '#FF6B6B', '#4ECDC4', '#FFE66D'];
@@ -5018,8 +5262,8 @@ function showTriviaQuestion() {
         // Complete daily challenge
         completeDailyChallenge('trivia');
         
-        // Firework effect
-        createFireworkEffect(document.getElementById('triviaGame'));
+        // Confetti effect
+        createConfettiEffect(document.getElementById('triviaGame'));
         
         // Share button
         document.getElementById('shareTriviaResult').addEventListener('click', () => {
@@ -5207,8 +5451,8 @@ function initMemory() {
                                 // Complete daily challenge
                                 completeDailyChallenge('memory');
                                 
-                                // Firework effect
-                                createFireworkEffect(document.getElementById('memoryGame'));
+                                // Confetti effect
+                                createConfettiEffect(document.getElementById('memoryGame'));
                                 
                                 // Add share button
                                 const memoryGame = document.getElementById('memoryGame');
@@ -5566,8 +5810,8 @@ function checkWordSelection(selectedCells, wordPositions, words, foundWords) {
                 setTimeout(() => {
                     showSuccess('You found all words! 🎉');
                     
-                    // Firework effect
-                    createFireworkEffect(document.getElementById('wordsearchGame'));
+                    // Confetti effect
+                    createConfettiEffect(document.getElementById('wordsearchGame'));
                     
                     // Add share button
                     const wordsearchGame = document.getElementById('wordsearchGame');
@@ -6003,14 +6247,18 @@ function initWordle() {
             row.forEach(key => {
                 const keyBtn = document.createElement('button');
                 keyBtn.className = 'wordle-key';
-                keyBtn.textContent = key;
                 keyBtn.dataset.key = key;
                 
                 if (key === 'ENTER') {
+                    keyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 10 4 15 9 20"></polyline><path d="M20 4v5h-5"></path></svg>';
+                    keyBtn.setAttribute('aria-label', 'Enter');
                     keyBtn.addEventListener('click', () => submitGuess());
                 } else if (key === 'BACK') {
+                    keyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>';
+                    keyBtn.setAttribute('aria-label', 'Backspace');
                     keyBtn.addEventListener('click', () => deleteLetter());
                 } else {
+                    keyBtn.textContent = key;
                     keyBtn.addEventListener('click', () => addLetter(key));
                 }
                 
@@ -6179,8 +6427,8 @@ function submitGuess() {
         saveGameScore('wordle', guesses, userCountry);
         completeDailyChallenge('wordle');
         
-        // Firework effect
-        createFireworkEffect(document.getElementById('wordleGame'));
+        // Confetti effect
+        createConfettiEffect(document.getElementById('wordleGame'));
         
         // Add share button
         const wordleGame = document.getElementById('wordleGame');

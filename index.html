@@ -25,6 +25,8 @@
     <script src="firebase-config.js"></script>
     <!-- Lottie Animation Library -->
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <!-- Leaflet and html2canvas loaded dynamically when needed -->
 </head>
 <body>
@@ -235,6 +237,104 @@
         </div>
     </section>
 
+    <!-- Modern Navigation Bar -->
+    <nav class="modern-navbar" id="modernNavbar">
+        <div class="navbar-container">
+            <!-- Logo (placeholder - user will upload later) -->
+            <div class="navbar-logo">
+                <a href="#" id="navbarLogoLink" class="logo-link">
+                    <span class="logo-placeholder">🎄</span>
+                    <span class="logo-text">Christmas Magic</span>
+                </a>
+            </div>
+            
+            <!-- Navigation Links -->
+            <div class="navbar-links">
+                <div class="nav-item dropdown" data-dropdown="create">
+                    <button class="nav-link">
+                        Create
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="createDropdown">
+                        <a href="#" class="dropdown-item" data-section="card-maker">
+                            <span class="dropdown-icon">✉️</span>
+                            <span>Card Maker</span>
+                        </a>
+                        <a href="#" class="dropdown-item" data-section="advent-calendar">
+                            <span class="dropdown-icon">📅</span>
+                            <span>Advent Calendar</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="nav-item dropdown" data-dropdown="share">
+                    <button class="nav-link">
+                        Share
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="shareDropdown">
+                        <a href="#" class="dropdown-item" data-section="sock-hanging">
+                            <span class="dropdown-icon">🧦</span>
+                            <span>Hang Sock</span>
+                        </a>
+                        <a href="#" class="dropdown-item" data-section="share-christmas">
+                            <span class="dropdown-icon">🎄</span>
+                            <span>Share Moment</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="nav-item dropdown" data-dropdown="games">
+                    <button class="nav-link">
+                        Games
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="gamesDropdown">
+                        <a href="#" class="dropdown-item" data-section="games">
+                            <span class="dropdown-icon">🎮</span>
+                            <span>All Games</span>
+                        </a>
+                        <a href="#" class="dropdown-item" data-section="personality-quiz">
+                            <span class="dropdown-icon">🎭</span>
+                            <span>Personality Quiz</span>
+                        </a>
+                        <a href="#" class="dropdown-item" data-section="gift-exchange">
+                            <span class="dropdown-icon">🎁</span>
+                            <span>Gift Exchange</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <a href="#" class="nav-link" data-section="how">How</a>
+            </div>
+            
+            <!-- Action Button -->
+            <div class="navbar-actions">
+                <button class="nav-cta-btn" data-section="personality-quiz" aria-label="Take a Quiz">
+                    <span class="cta-text">Take a Quiz</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mobile Menu Toggle -->
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+    
     <!-- Expandable Tabs Navigation -->
     <nav class="expandable-tabs-nav" id="expandableTabsNav" style="display: none;">
         <div class="expandable-tabs-container">
@@ -766,7 +866,11 @@ Schitt's Creek, PA 24216</textarea>
                     <div class="auto-generator-section">
                         <label>Quick Generate:</label>
                         <div class="generator-options">
-                            <input type="number" id="participantCount" placeholder="Count" min="2" max="50" value="5">
+                            <div class="number-input-wrapper">
+                                <button class="number-input-btn" id="decrementCount" type="button" aria-label="Decrease">−</button>
+                                <input type="number" id="participantCount" class="number-input" placeholder="Count" min="2" max="50" value="5">
+                                <button class="number-input-btn" id="incrementCount" type="button" aria-label="Increase">+</button>
+                            </div>
                             <select id="generatorType">
                                 <option value="numbers">Numbers (1, 2, 3...)</option>
                                 <option value="letters">Letters (A, B, C...)</option>
