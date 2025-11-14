@@ -97,23 +97,45 @@ async function loadGlobalSocksFromFirebase(limit = 50) {
 async function saveChristmasShareToFirebase(share) {
     if (!isFirebaseAvailable()) {
         console.log('Firebase not available, using localStorage only');
+        showError('Firebase is not available. Please check your connection.');
         return false;
     }
 
     try {
+        // Validate share data
+        if (!share.image || share.image === '') {
+            console.error('Cannot save: image is required');
+            return false;
+        }
+        
+        // Check image size (base64 can be large)
+        const base64Size = share.image.length * 0.75; // Approximate size in bytes
+        if (base64Size > 10 * 1024 * 1024) { // 10MB limit
+            showError('Image is too large. Please use a smaller image (max 10MB).');
+            return false;
+        }
+        
         // Store image in Firestore (base64) - Note: For large images, consider using Firebase Storage
-        await window.db.collection('christmasShares').add({
+        const docRef = await window.db.collection('christmasShares').add({
             image: share.image,
             message: share.message || null,
-            location: share.location,
-            date: share.date,
+            location: share.location || 'Unknown Location',
+            date: share.date || new Date().toLocaleDateString(),
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             createdAt: new Date().toISOString()
         });
-        console.log('Christmas share saved to Firebase');
+        
+        console.log('Christmas share saved to Firebase with ID:', docRef.id);
         return true;
     } catch (error) {
         console.error('Error saving Christmas share to Firebase:', error);
+        if (error.code === 'permission-denied') {
+            showError('Permission denied. Please check Firebase security rules.');
+        } else if (error.code === 'unavailable') {
+            showError('Firebase is unavailable. Please check your connection.');
+        } else {
+            showError('Failed to save to Firebase: ' + (error.message || 'Unknown error'));
+        }
         return false;
     }
 }
@@ -172,28 +194,60 @@ async function saveGameScoreToFirebase(gameType, score, country) {
 }
 
 // Firebase: Load Global Leaderboard
-async function loadGlobalLeaderboardFromFirebase(gameType, limit = 50) {
+async function loadGlobalLeaderboardFromFirebase(gameType, limit = 50, dailyOnly = false) {
     if (!isFirebaseAvailable()) {
         return [];
     }
 
     try {
-        const snapshot = await window.db.collection('leaderboards').doc(gameType)
-            .collection('scores')
-            .orderBy('score', gameType === 'memory' || gameType === 'wordsearch' ? 'asc' : 'desc')
+        let query = window.db.collection('leaderboards').doc(gameType)
+            .collection('scores');
+        
+        // Filter by today's date if dailyOnly is true
+        if (dailyOnly) {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            // Use Firestore Timestamp for date comparison
+            const todayTimestamp = firebase.firestore.Timestamp.fromDate(today);
+            const tomorrowTimestamp = firebase.firestore.Timestamp.fromDate(tomorrow);
+            
+            query = query.where('timestamp', '>=', todayTimestamp)
+                        .where('timestamp', '<', tomorrowTimestamp)
+                        .orderBy('timestamp', 'desc');
+        } else {
+            // Overall leaderboard - order by score
+            query = query.orderBy('score', gameType === 'memory' || gameType === 'wordsearch' ? 'asc' : 'desc');
+        }
+        
+        const snapshot = await query
             .limit(limit)
             .get();
 
         const scores = [];
         snapshot.forEach(doc => {
             const data = doc.data();
+            const timestamp = data.timestamp?.toDate() || new Date(data.createdAt);
             scores.push({
                 score: data.score,
                 country: data.country,
                 date: data.createdAt,
-                timestamp: data.timestamp?.toDate() || new Date(data.createdAt)
+                timestamp: timestamp
             });
         });
+        
+        // If daily, sort by score after filtering
+        if (dailyOnly) {
+            scores.sort((a, b) => {
+                if (gameType === 'memory' || gameType === 'wordsearch') {
+                    return a.score - b.score;
+                }
+                return b.score - a.score;
+            });
+        }
+        
         return scores;
     } catch (error) {
         console.error('Error loading leaderboard from Firebase:', error);
@@ -1143,8 +1197,23 @@ function initNavigation() {
             // Hide all sections
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             
+            // Reset game state
+            document.querySelectorAll('.game-container').forEach(c => c.style.display = 'none');
+            const gamesGrid = document.querySelector('.games-grid');
+            if (gamesGrid) gamesGrid.style.display = 'grid';
+            const leaderboard = document.getElementById('gamesLeaderboard');
+            if (leaderboard) leaderboard.style.display = 'block';
+            currentGame = null;
+            if (gameKeyboardHandler) {
+                document.removeEventListener('keydown', gameKeyboardHandler);
+                gameKeyboardHandler = null;
+            }
+            
             // Show hero section
-            if (hero) hero.style.display = 'block';
+            if (hero) {
+                hero.style.display = 'flex';
+                hero.style.textAlign = 'center';
+            }
             
             // Hide navigation
             if (expandableNav) expandableNav.style.display = 'none';
@@ -1152,6 +1221,9 @@ function initNavigation() {
             // Remove active from all tabs
             expandableTabs.forEach(t => t.classList.remove('active'));
             homeTab.classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             
             if (soundEnabled) playSound('click');
         });
@@ -1193,6 +1265,19 @@ function switchSection(section) {
             
             // Update page stats when switching sections
             updatePageStats();
+            
+            // Show/hide leaderboard based on section
+            const leaderboard = document.getElementById('gamesLeaderboard');
+            const gamesGrid = document.querySelector('.games-grid');
+            if (section === 'games') {
+                // Show leaderboard when games section is active and games grid is visible
+                if (gamesGrid && gamesGrid.style.display !== 'none') {
+                    if (leaderboard) leaderboard.style.display = 'block';
+                }
+            } else {
+                // Hide leaderboard for other sections
+                if (leaderboard) leaderboard.style.display = 'none';
+            }
             
             // Resize map if switching to sock-hanging section
             if (section === 'sock-hanging' && map) {
@@ -4554,9 +4639,11 @@ function initGames() {
                     c.style.display = 'none';
                 });
                 
-                // Hide games grid
+                // Hide games grid and leaderboard
                 const gamesGrid = document.querySelector('.games-grid');
                 if (gamesGrid) gamesGrid.style.display = 'none';
+                const leaderboard = document.getElementById('gamesLeaderboard');
+                if (leaderboard) leaderboard.style.display = 'none';
                 
                 // Remove old keyboard handler
                 if (gameKeyboardHandler) {
@@ -4604,6 +4691,8 @@ function initGameKeyboardShortcuts(game) {
             document.querySelectorAll('.game-container').forEach(c => c.style.display = 'none');
             const gamesGrid = document.querySelector('.games-grid');
             if (gamesGrid) gamesGrid.style.display = 'grid';
+            const leaderboard = document.getElementById('gamesLeaderboard');
+            if (leaderboard) leaderboard.style.display = 'block';
             currentGame = null;
             if (gameKeyboardHandler) {
                 document.removeEventListener('keydown', gameKeyboardHandler);
@@ -4659,6 +4748,8 @@ function addGameBackButtons() {
             document.querySelectorAll('.game-container').forEach(c => c.style.display = 'none');
             const gamesGrid = document.querySelector('.games-grid');
             if (gamesGrid) gamesGrid.style.display = 'grid';
+            const leaderboard = document.getElementById('gamesLeaderboard');
+            if (leaderboard) leaderboard.style.display = 'block';
             currentGame = null;
             if (gameKeyboardHandler) {
                 document.removeEventListener('keydown', gameKeyboardHandler);
@@ -4708,19 +4799,36 @@ function saveGameScore(gameType, score, country = '🌍 World') {
     updateLeaderboard(gameType);
 }
 
-async function updateLeaderboard(gameType) {
+async function updateLeaderboard(gameType, viewType = 'overall') {
     const leaderboardContent = document.getElementById('leaderboardContent');
     if (!leaderboardContent) return;
     
+    const isDaily = viewType === 'daily';
+    
     // Load global leaderboard from Firebase and merge with local
-    const globalScores = await loadGlobalLeaderboardFromFirebase(gameType, 50);
+    const globalScores = await loadGlobalLeaderboardFromFirebase(gameType, 50, isDaily);
     const localScores = gameLeaderboards[gameType] || [];
+    
+    // Filter local scores by date if daily
+    let filteredLocalScores = localScores;
+    if (isDaily) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        filteredLocalScores = localScores.filter(entry => {
+            const entryDate = new Date(entry.timestamp || entry.date);
+            return entryDate >= today && entryDate < tomorrow;
+        });
+    }
     
     // Merge scores (prioritize global)
     const allScores = [...globalScores];
-    localScores.forEach(localEntry => {
+    filteredLocalScores.forEach(localEntry => {
         // Add local scores that aren't duplicates
-        if (!allScores.find(s => s.score === localEntry.score && s.country === localEntry.country)) {
+        if (!allScores.find(s => s.score === localEntry.score && s.country === localEntry.country && 
+            Math.abs(new Date(s.timestamp || s.date).getTime() - new Date(localEntry.timestamp || localEntry.date).getTime()) < 1000)) {
             allScores.push(localEntry);
         }
     });
@@ -4745,7 +4853,8 @@ async function updateLeaderboard(gameType) {
     leaderboardContent.innerHTML = '';
     
     if (sorted.length === 0) {
-        leaderboardContent.innerHTML = '<div class="empty-state-message" style="text-align: center; padding: 2rem;">No scores yet. Play to get on the leaderboard!</div>';
+        const message = isDaily ? 'No scores today yet. Play to get on the daily leaderboard!' : 'No scores yet. Play to get on the leaderboard!';
+        leaderboardContent.innerHTML = `<div class="empty-state-message" style="text-align: center; padding: 2rem;">${message}</div>`;
         return;
     }
     
@@ -4761,34 +4870,43 @@ async function updateLeaderboard(gameType) {
     });
 }
 
+let currentLeaderboardView = 'overall'; // 'daily' or 'overall'
+let currentLeaderboardGame = 'trivia';
+
 function initLeaderboard() {
+    // Leaderboard view toggle (Daily/Overall)
+    const viewToggleButtons = document.querySelectorAll('.leaderboard-view-btn');
+    viewToggleButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            viewToggleButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentLeaderboardView = btn.dataset.view;
+            updateLeaderboard(currentLeaderboardGame, currentLeaderboardView);
+        });
+    });
+    
+    // Game type tabs
     const leaderboardTabs = document.querySelectorAll('.leaderboard-tab');
     leaderboardTabs.forEach(tab => {
         tab.addEventListener('click', () => {
             leaderboardTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            const gameType = tab.dataset.game;
-            updateLeaderboard(gameType);
+            currentLeaderboardGame = tab.dataset.game;
+            updateLeaderboard(currentLeaderboardGame, currentLeaderboardView);
         });
     });
     
-    // Show leaderboard on games section
-    const gamesSection = document.getElementById('games');
-    if (gamesSection) {
-        const showLeaderboardBtn = document.createElement('button');
-        showLeaderboardBtn.className = 'action-btn secondary';
-        showLeaderboardBtn.textContent = '🏆 View Leaderboard';
-        showLeaderboardBtn.style.marginTop = '1rem';
-        showLeaderboardBtn.addEventListener('click', () => {
-            const leaderboard = document.getElementById('gamesLeaderboard');
-            if (leaderboard) {
-                leaderboard.style.display = leaderboard.style.display === 'none' ? 'block' : 'none';
-                if (leaderboard.style.display !== 'none') {
-                    updateLeaderboard('trivia');
-                }
-            }
-        });
-        gamesSection.querySelector('.container').appendChild(showLeaderboardBtn);
+    // Show leaderboard directly below games grid (no button needed)
+    const leaderboard = document.getElementById('gamesLeaderboard');
+    if (leaderboard) {
+        // Only show when games grid is visible
+        const gamesGrid = document.querySelector('.games-grid');
+        if (gamesGrid && gamesGrid.style.display !== 'none') {
+            leaderboard.style.display = 'block';
+            updateLeaderboard('trivia', 'overall');
+        } else {
+            leaderboard.style.display = 'none';
+        }
     }
 }
 
@@ -5784,6 +5902,24 @@ const christmasWords = [
     'REINDEER', 'ORNAMENT', 'PRESENT', 'FAMILY', 'PEACE', 'LOVE', 'JOY', 'HOPE'
 ].filter(w => w.length === 5); // Only 5-letter words
 
+// Word hints - descriptive clues for each word
+const wordHints = {
+    'SANTA': 'The jolly man in red who delivers presents on Christmas Eve; also known as Saint Nicholas or Father Christmas.',
+    'SNOWY': 'Covered with or resembling snow; a white, wintry landscape perfect for Christmas scenes.',
+    'GIFTS': 'Presents given during Christmas celebrations; items wrapped in colorful paper and placed under the tree.',
+    'TREES': 'Evergreen plants decorated with lights, ornaments, and a star on top during the Christmas season.',
+    'BELLS': 'Musical instruments that ring and jingle, often heard in Christmas carols and on sleigh rides.',
+    'HOLLY': 'A festive evergreen plant with red berries and spiky leaves, used for Christmas decorations and wreaths.',
+    'MERRY': 'A cheerful and joyful feeling associated with Christmas celebrations and good spirits.',
+    'JOLLY': 'Happy, cheerful, and full of good humor; often used to describe Santa Claus\'s personality.',
+    'FROST': 'A thin layer of ice crystals that forms on surfaces during cold winter mornings, creating a magical appearance.',
+    'CAROL': 'A traditional Christmas song or hymn sung during the holiday season, like "Silent Night" or "Jingle Bells".',
+    'ANGEL': 'A heavenly messenger often depicted on top of Christmas trees or in nativity scenes, symbolizing peace and hope.',
+    'STOCK': 'A long sock hung by the fireplace for Santa to fill with small gifts and treats on Christmas Eve.',
+    'CANDY': 'Sweet treats like candy canes, chocolates, and other confections enjoyed during Christmas celebrations.',
+    'PEACE': 'A state of tranquility and harmony, one of the core values celebrated during the Christmas season.'
+};
+
 function getDailyWord() {
     const today = new Date();
     const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
@@ -5795,6 +5931,7 @@ let wordleWord = '';
 let wordleGuesses = [];
 let currentGuess = '';
 let currentRow = 0;
+let wordleHintShown = false; // Track if hint has been shown (only one hint per game)
 const MAX_GUESSES = 6;
 const WORD_LENGTH = 5;
 
@@ -5814,6 +5951,7 @@ function initWordle() {
         wordleGuesses = [];
         currentGuess = '';
         currentRow = 0;
+        wordleHintShown = false;
         
         // Create grid
         grid.innerHTML = '';
@@ -5868,6 +6006,57 @@ function initWordle() {
         if (resetBtn) {
             resetBtn.style.display = 'none';
             resetBtn.onclick = () => initWordle();
+        }
+        
+        // Hint button
+        let hintBtn = document.getElementById('wordleHint');
+        if (!hintBtn) {
+            hintBtn = document.createElement('button');
+            hintBtn.id = 'wordleHint';
+            hintBtn.className = 'action-btn';
+            hintBtn.textContent = '💡 Get Hint';
+            hintBtn.style.marginTop = '1rem';
+            hintBtn.style.marginRight = '0.5rem';
+            hintBtn.addEventListener('click', showWordleHint);
+            const wordleGame = document.getElementById('wordleGame');
+            const resetBtn = document.getElementById('wordleReset');
+            if (resetBtn && resetBtn.parentNode) {
+                resetBtn.parentNode.insertBefore(hintBtn, resetBtn);
+            } else {
+                wordleGame.appendChild(hintBtn);
+            }
+        } else {
+            hintBtn.style.display = 'block';
+            hintBtn.disabled = false;
+            hintBtn.style.opacity = '1';
+            hintBtn.textContent = '💡 Get Hint';
+            hintBtn.onclick = showWordleHint;
+        }
+        
+        // Hint message area
+        let hintMessage = document.getElementById('wordleHintMessage');
+        if (!hintMessage) {
+            hintMessage = document.createElement('div');
+            hintMessage.id = 'wordleHintMessage';
+            hintMessage.style.marginTop = '1rem';
+            hintMessage.style.padding = '1rem';
+            hintMessage.style.background = 'rgba(255, 184, 28, 0.1)';
+            hintMessage.style.border = '1px solid rgba(255, 184, 28, 0.3)';
+            hintMessage.style.borderRadius = '12px';
+            hintMessage.style.color = 'rgba(255, 255, 255, 0.9)';
+            hintMessage.style.fontSize = '0.95rem';
+            hintMessage.style.lineHeight = '1.6';
+            hintMessage.style.display = 'none';
+            const wordleGame = document.getElementById('wordleGame');
+            const hintBtn = document.getElementById('wordleHint');
+            if (hintBtn && hintBtn.parentNode) {
+                hintBtn.parentNode.insertBefore(hintMessage, hintBtn.nextSibling);
+            } else {
+                wordleGame.appendChild(hintMessage);
+            }
+        } else {
+            hintMessage.style.display = 'none';
+            hintMessage.textContent = '';
         }
         
         document.getElementById('wordleMessage').textContent = '';
@@ -5959,6 +6148,8 @@ function submitGuess() {
         const guesses = currentRow + 1;
         document.getElementById('wordleMessage').textContent = `🎉 You won in ${guesses} guesses!`;
         document.getElementById('wordleReset').style.display = 'block';
+        const hintBtn = document.getElementById('wordleHint');
+        if (hintBtn) hintBtn.style.display = 'none';
         document.removeEventListener('keydown', handleWordleKeydown);
         showSuccess('Congratulations!');
         
@@ -5996,9 +6187,51 @@ function submitGuess() {
     if (currentRow >= MAX_GUESSES) {
         document.getElementById('wordleMessage').textContent = `Game Over! The word was: ${wordleWord}`;
         document.getElementById('wordleReset').style.display = 'block';
+        const hintBtn = document.getElementById('wordleHint');
+        if (hintBtn) hintBtn.style.display = 'none';
         document.removeEventListener('keydown', handleWordleKeydown);
         showError('Out of guesses!');
     }
+}
+
+function showWordleHint() {
+    if (wordleHintShown) {
+        showError('Hint has already been shown!');
+        return;
+    }
+    
+    // Get the hint for the current word
+    const hint = wordHints[wordleWord];
+    
+    if (!hint) {
+        showError('No hint available for this word.');
+        return;
+    }
+    
+    // Show the hint message
+    const hintMessage = document.getElementById('wordleHintMessage');
+    if (hintMessage) {
+        hintMessage.innerHTML = `<strong>💡 Hint:</strong> ${hint}`;
+        hintMessage.style.display = 'block';
+        
+        // Add light mode support
+        if (!document.body.classList.contains('dark-mode')) {
+            hintMessage.style.background = 'rgba(255, 184, 28, 0.15)';
+            hintMessage.style.borderColor = 'rgba(255, 184, 28, 0.4)';
+            hintMessage.style.color = '#1a1a1a';
+        }
+    }
+    
+    // Update hint button
+    const hintBtn = document.getElementById('wordleHint');
+    if (hintBtn) {
+        hintBtn.textContent = '💡 Hint (Used)';
+        hintBtn.disabled = true;
+        hintBtn.style.opacity = '0.5';
+    }
+    
+    wordleHintShown = true;
+    showSuccess('💡 Hint revealed!');
 }
 
 function checkWordleGuess(guess, target) {
@@ -6491,7 +6724,7 @@ function handleChristmasImageFile(file) {
     reader.readAsDataURL(file);
 }
 
-function submitChristmasShare() {
+async function submitChristmasShare() {
     const imageInput = document.getElementById('christmasImage');
     const messageInput = document.getElementById('christmasMessage');
     const locationInput = document.getElementById('christmasLocation');
@@ -6522,40 +6755,69 @@ function submitChristmasShare() {
         time: new Date().toLocaleTimeString()
     };
     
-    // Save to Firebase FIRST (this is the source of truth)
-    // Do NOT add to local christmasShares - let Firebase real-time subscription update it
-    saveChristmasShareToFirebase(share).then(() => {
-        // After saving to Firebase, the real-time subscription will update the UI
-    });
-    
-    // Reset form
-    imageInput.value = '';
-    document.getElementById('christmasImagePlaceholder').style.display = 'flex';
-    document.getElementById('christmasImagePreview').style.display = 'none';
-    if (messageInput) messageInput.value = '';
-    if (locationInput) locationInput.value = '';
-    document.getElementById('christmasMessageCounter').textContent = '0 / 200';
-    
-    // Reset location status
-    const locationStatus = document.getElementById('locationStatus');
-    if (locationStatus) {
-        locationStatus.textContent = 'Click button below to get your location';
-        locationStatus.style.color = 'rgba(255, 255, 255, 0.7)';
+    // Validate image
+    if (!share.image || share.image === '') {
+        showError('Please upload an image.');
+        return;
     }
     
-    // Reset location status - user needs to click button again
-    const getLocationBtn = document.getElementById('getCurrentLocationBtn');
-    // Don't auto-click - browsers require user interaction for geolocation
-    
-    // Reload feed
-    loadChristmasShares();
-    updateShareChristmasStats();
-    if (typeof incrementStat === 'function') {
-        incrementStat('christmasShares');
+    // Show loading state
+    const submitBtn = document.querySelector('#shareChristmasForm button[type="submit"]');
+    const originalBtnText = submitBtn ? submitBtn.textContent : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Uploading...';
     }
     
-    showSuccess('Your Christmas moment has been shared! 🎄');
-    if (soundEnabled) playSound('success');
+    try {
+        // Save to Firebase FIRST (this is the source of truth)
+        const saved = await saveChristmasShareToFirebase(share);
+        
+        if (!saved) {
+            showError('Failed to save to Firebase. Please check your connection and try again.');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalBtnText;
+            }
+            return;
+        }
+        
+        // Reset form only after successful save
+        imageInput.value = '';
+        document.getElementById('christmasImagePlaceholder').style.display = 'flex';
+        document.getElementById('christmasImagePreview').style.display = 'none';
+        if (messageInput) messageInput.value = '';
+        if (locationInput) locationInput.value = '';
+        document.getElementById('christmasMessageCounter').textContent = '0 / 200';
+        
+        // Reset location status
+        const locationStatus = document.getElementById('locationStatus');
+        if (locationStatus) {
+            locationStatus.textContent = 'Click button below to get your location';
+            locationStatus.style.color = 'rgba(255, 255, 255, 0.7)';
+        }
+        
+        // Wait a moment for Firebase to process, then reload feed
+        setTimeout(async () => {
+            await loadChristmasShares();
+            updateShareChristmasStats();
+        }, 1000);
+        
+        if (typeof incrementStat === 'function') {
+            incrementStat('christmasShares');
+        }
+        
+        showSuccess('Your Christmas moment has been shared! 🎄');
+        if (soundEnabled) playSound('success');
+    } catch (error) {
+        console.error('Error submitting Christmas share:', error);
+        showError('Failed to share. Please try again.');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+        }
+    }
 }
 
 async function loadChristmasShares() {
@@ -6935,5 +7197,6 @@ function playSound(type) {
             break;
     }
 }
+
 
 

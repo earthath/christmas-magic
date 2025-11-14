@@ -837,8 +837,12 @@ Schitt's Creek, PA 24216</textarea>
             </div>
             
             <!-- Games Leaderboard -->
-            <div class="games-leaderboard" id="gamesLeaderboard" style="display: none;">
+            <div class="games-leaderboard" id="gamesLeaderboard">
                 <h3>🏆 Leaderboard</h3>
+                <div class="leaderboard-view-toggle">
+                    <button class="leaderboard-view-btn active" data-view="daily">📅 Daily</button>
+                    <button class="leaderboard-view-btn" data-view="overall">🌍 Overall</button>
+                </div>
                 <div class="leaderboard-tabs">
                     <button class="leaderboard-tab active" data-game="trivia">Trivia</button>
                     <button class="leaderboard-tab" data-game="memory">Memory</button>
