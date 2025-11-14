@@ -7585,15 +7585,14 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 const newCloseBtn = closeBtn.cloneNode(true);
                 closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
                 
-                // Add multiple event listeners for maximum compatibility
-                newCloseBtn.addEventListener('click', closeModal, { passive: false, capture: true });
-                newCloseBtn.addEventListener('touchend', closeModal, { passive: false, capture: true });
+                // Add multiple event listeners for maximum compatibility (without capture to avoid blocking other events)
+                newCloseBtn.addEventListener('click', closeModal, { passive: false });
+                newCloseBtn.addEventListener('touchend', closeModal, { passive: false });
                 newCloseBtn.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }, { passive: false, capture: true });
+                    e.stopPropagation(); // Don't prevent default to allow normal touch behavior
+                }, { passive: false });
                 // Also try pointer events
-                newCloseBtn.addEventListener('pointerup', closeModal, { passive: false, capture: true });
+                newCloseBtn.addEventListener('pointerup', closeModal, { passive: false });
                 
                 // Direct onclick as ultimate fallback
                 newCloseBtn.onclick = closeModal;
@@ -7612,8 +7611,8 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         
         // Close on background click/touch - but only if not clicking on content
         const closeOnBackground = (e) => {
-            // Don't close if clicking on the modal content
-            if (e.target === modal || e.target.classList.contains('sphere-image-modal')) {
+            // Only close if clicking directly on the modal background, not on content
+            if (e.target === modal) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Closing modal from background'); // Debug log
