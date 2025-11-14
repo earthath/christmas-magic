@@ -110,10 +110,10 @@
 
     <!-- Hero Section -->
     <section class="hero-section" id="hero">
-        <!-- Animated Christmas Tree - Lottie Animation -->
+        <!-- Animated Merry XMas - Lottie Animation -->
         <div class="christmas-tree-container">
             <lottie-player 
-                src="decorate/Fun Christmas tree.json" 
+                src="decorate/Merry XMas.json" 
                 background="transparent" 
                 speed="1" 
                 style="width: 100%; height: 100%;" 
@@ -124,6 +124,21 @@
                 id="christmasTreeLottie">
             </lottie-player>
             <div class="tree-glow"></div>
+        </div>
+        
+        <!-- Cats for New Year and Christmas - Lottie Animation -->
+        <div class="cats-lottie-container">
+            <lottie-player 
+                src="decorate/Cats for new year and christmas.json" 
+                background="transparent" 
+                speed="1" 
+                style="width: 100%; height: 100%;" 
+                loop 
+                autoplay
+                mode="normal"
+                class="cats-lottie"
+                id="catsLottie">
+            </lottie-player>
         </div>
         
         <!-- Curved Loop Text Animation -->
@@ -169,23 +184,42 @@
             <div class="flowing-menu">
                 <div class="flowing-menu-bg" id="flowingMenuBg"></div>
                 <div class="hero-buttons">
-                    <button class="hero-btn primary" data-section="card-maker">
-                        <span class="btn-content">✉️ Create Card</span>
+                    <button class="glow-button glow-primary" data-section="card-maker">
+                        Create Card
                     </button>
-                    <button class="hero-btn secondary" data-section="advent-calendar">
-                        <span class="btn-content">🎁 Open Calendar</span>
+                    <button class="glow-button glow-secondary" data-section="advent-calendar">
+                        Open Calendar
                     </button>
-                    <button class="hero-btn secondary" data-section="personality-quiz">
-                        <span class="btn-content">🎭 Take Quiz</span>
+                    <button class="glow-button glow-secondary" data-section="personality-quiz">
+                        Take Quiz
                     </button>
-                    <button class="hero-btn secondary" data-section="sock-hanging">
-                        <span class="btn-content">🧦 Hang Sock</span>
+                    <button class="glow-button glow-secondary" data-section="sock-hanging">
+                        Hang Sock
                     </button>
-                    <button class="hero-btn secondary" data-section="gift-exchange">
-                        <span class="btn-content">🎁 Gift Exchange</span>
+                    <button class="glow-button glow-secondary" data-section="gift-exchange">
+                        Gift Exchange
                     </button>
-                    <button class="hero-btn secondary" data-section="games">
-                        <span class="btn-content">🎮 Games</span>
+                    <div class="glow-button-wrapper games-dropdown-hero" id="gamesDropdownHero">
+                        <button class="glow-button glow-secondary games-btn-hero" data-section="games">
+                            Games
+                        </button>
+                        <div class="games-dropdown-menu-hero">
+                            <button class="games-dropdown-item-hero" data-game="trivia">
+                                Trivia
+                            </button>
+                            <button class="games-dropdown-item-hero" data-game="memory">
+                                Memory
+                            </button>
+                            <button class="games-dropdown-item-hero" data-game="wordsearch">
+                                Word Search
+                            </button>
+                            <button class="games-dropdown-item-hero" data-game="wordle">
+                                Wordle
+                            </button>
+                        </div>
+                    </div>
+                    <button class="glow-button glow-secondary" data-section="share-christmas">
+                        Share Christmas
                     </button>
                 </div>
             </div>

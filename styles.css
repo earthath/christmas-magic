@@ -42,6 +42,8 @@ body {
 body:not(.dark-mode) {
     background: #F5F5F5;
     color: #1a1a1a;
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(0, 0, 0, 0.15);
 }
 
 body:not(.dark-mode) .section-title,
@@ -64,6 +66,44 @@ body:not(.dark-mode) .hero-btn,
 body:not(.dark-mode) .action-btn,
 body:not(.dark-mode) .nav-btn {
     color: #1a1a1a;
+}
+
+/* Light Mode Glow Buttons */
+body:not(.dark-mode) .glow-button {
+    color: #1a1a1a;
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .glow-primary {
+    background: rgba(200, 16, 46, 0.2);
+    border-color: rgba(200, 16, 46, 0.4);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .glow-primary:hover {
+    background: rgba(200, 16, 46, 0.3);
+    border-color: rgba(200, 16, 46, 0.6);
+}
+
+body:not(.dark-mode) .glow-secondary {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0 15px rgba(144, 238, 144, 0.3);
+}
+
+body:not(.dark-mode) .glow-secondary:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0 25px rgba(144, 238, 144, 0.5);
+}
+
+body:not(.dark-mode) .glow-button::before {
+    background: radial-gradient(circle, rgba(144, 238, 144, 0.3) 0%, transparent 70%);
+}
+
+body:not(.dark-mode) .glow-button:hover {
+    border-color: rgba(144, 238, 144, 0.5);
 }
 
 body:not(.dark-mode) .hero-subtitle,
@@ -1325,6 +1365,40 @@ body:not(.dark-mode) .control-btn:hover {
     }
 }
 
+/* Cats for New Year and Christmas - Lottie Animation */
+.cats-lottie-container {
+    position: fixed;
+    bottom: 100px;
+    right: 50px;
+    width: 300px;
+    height: 300px;
+    z-index: 999;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
+}
+
+.cats-lottie {
+    width: 100% !important;
+    height: 100% !important;
+    filter: drop-shadow(0 0 20px rgba(255, 184, 28, 0.4)) 
+            drop-shadow(0 0 40px rgba(255, 184, 28, 0.2));
+    animation: catsFloat 3s ease-in-out infinite;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+@keyframes catsFloat {
+    0%, 100% {
+        transform: translateY(0) scale(1);
+    }
+    50% {
+        transform: translateY(-8px) scale(1.02);
+    }
+}
+
 @keyframes treeGlow {
     0% {
         opacity: 0.4;
@@ -1385,6 +1459,17 @@ body:not(.dark-mode) .control-btn:hover {
         animation: treeFloat 5s ease-in-out infinite;
     }
     
+    .cats-lottie-container {
+        width: 180px;
+        height: 180px;
+        bottom: 80px;
+        right: 20px;
+    }
+    
+    .cats-lottie {
+        animation: catsFloat 4s ease-in-out infinite;
+    }
+    
     .curved-loop-container {
         top: 5%;
         height: 150px;
@@ -1406,6 +1491,13 @@ body:not(.dark-mode) .control-btn:hover {
     .tree-glow {
         width: 120px;
         height: 40px;
+    }
+    
+    .cats-lottie-container {
+        width: 120px;
+        height: 120px;
+        bottom: 60px;
+        right: 10px;
     }
     
     .curved-loop-container {
@@ -1498,57 +1590,52 @@ body:not(.dark-mode) .control-btn:hover {
     z-index: 1;
 }
 
-.hero-btn {
+/* 21st.dev Glowing Button Style */
+.glow-button {
     position: relative;
-    padding: 1.125rem 2.75rem;
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: 50px;
-    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    color: white;
+    border-radius: 50px;
+    transition: all 0.3s ease-in-out;
     letter-spacing: 0.02em;
     overflow: hidden;
     z-index: 1;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
-.hero-btn::before {
+.glow-button::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 0;
-    height: 0;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 40%, transparent 70%);
+    width: 300%;
+    height: 300%;
+    background: radial-gradient(circle, rgba(144, 238, 144, 0.4) 0%, transparent 70%);
+    transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s;
     border-radius: 50%;
     transform: translate(-50%, -50%);
-    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: -1;
-    will-change: width, height;
+    z-index: 0;
 }
 
-.hero-btn:hover::before {
-    width: 350px;
-    height: 350px;
+.glow-button:hover::before {
+    width: 0;
+    height: 0;
+    top: 50%;
+    left: 50%;
 }
 
-.hero-btn.primary::before {
-    background: radial-gradient(circle, rgba(200, 16, 46, 0.5) 0%, rgba(200, 16, 46, 0.2) 40%, transparent 70%);
-}
-
-.hero-btn .btn-content {
-    position: relative;
-    z-index: 1;
-    transition: transform 0.3s ease;
-    display: inline-block;
-}
-
-.hero-btn:hover .btn-content {
-    transform: scale(1.05);
+.glow-button:hover {
+    transform: translateY(-2px);
+    border-color: rgba(144, 238, 144, 0.4);
 }
 
 /* Ripple Animation */
@@ -1576,36 +1663,108 @@ body:not(.dark-mode) .control-btn:hover {
 }
 
 @media (max-width: 768px) {
-    .hero-btn {
-        padding: 0.875rem 1.75rem;
-        font-size: 0.9rem;
+    .glow-button {
+        padding: 0.625rem 1.25rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Mobile dropdown adjustments for hero buttons */
+    .games-dropdown-menu-hero {
+        position: fixed !important;
+        min-width: 200px;
+        max-width: 90vw;
+        z-index: 10000 !important;
     }
 }
 
-.hero-btn.primary {
-    background: var(--christmas-red);
-    border-color: var(--christmas-red);
+/* Glowing Button Variants */
+.glow-primary {
+    background: rgba(200, 16, 46, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(200, 16, 46, 0.3);
+    box-shadow: 0 0 15px rgba(144, 238, 144, 0.5);
 }
 
-.hero-btn.primary::before {
-    background: radial-gradient(circle, rgba(200, 16, 46, 0.4) 0%, rgba(200, 16, 46, 0.1) 50%, transparent 70%);
+.glow-primary:hover {
+    background: rgba(200, 16, 46, 0.25);
+    border-color: rgba(200, 16, 46, 0.5);
+    box-shadow: 0 0 25px rgba(144, 238, 144, 0.7);
 }
 
-.hero-btn.secondary {
-    background: transparent;
+.glow-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 15px rgba(144, 238, 144, 0.4);
+}
+
+.glow-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 25px rgba(144, 238, 144, 0.6);
+}
+
+.glow-button span,
+.glow-button .btn-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* Glowing button animation */
+@keyframes glow-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.1),
+                    0 0 40px rgba(255, 184, 28, 0.1),
+                    inset 0 0 20px rgba(255, 255, 255, 0.05);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.2),
+                    0 0 60px rgba(255, 184, 28, 0.2),
+                    inset 0 0 30px rgba(255, 255, 255, 0.1);
+    }
 }
 
 .hero-btn:hover {
     background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 40px rgba(255, 255, 255, 0.3),
+                0 0 80px rgba(255, 184, 28, 0.3),
+                0 8px 25px rgba(0, 0, 0, 0.3),
+                inset 0 0 40px rgba(255, 255, 255, 0.15);
+    animation: none;
+}
+
+.hero-btn.primary {
+    box-shadow: 0 0 20px rgba(200, 16, 46, 0.3),
+                0 0 40px rgba(200, 16, 46, 0.2),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+    animation: glow-pulse-red 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-red {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(200, 16, 46, 0.3),
+                    0 0 40px rgba(200, 16, 46, 0.2),
+                    inset 0 0 20px rgba(255, 255, 255, 0.05);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(200, 16, 46, 0.4),
+                    0 0 60px rgba(200, 16, 46, 0.3),
+                    inset 0 0 30px rgba(255, 255, 255, 0.1);
+    }
 }
 
 .hero-btn.primary:hover {
     background: var(--christmas-light-red);
     border-color: var(--christmas-light-red);
-    box-shadow: 0 8px 25px rgba(200, 16, 46, 0.4);
+    box-shadow: 0 0 50px rgba(200, 16, 46, 0.5),
+                0 0 100px rgba(200, 16, 46, 0.4),
+                0 8px 25px rgba(0, 0, 0, 0.3),
+                inset 0 0 40px rgba(255, 255, 255, 0.15);
+    animation: none;
 }
 
 .hero-ornaments {
@@ -2701,11 +2860,15 @@ body:not(.dark-mode) .control-btn:hover {
     width: 48px;
     white-space: nowrap;
     margin: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .expandable-tab:hover {
     width: auto;
     padding: 0.75rem 1.25rem;
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
 }
 
 .expandable-tab .tab-icon {
@@ -2742,10 +2905,6 @@ body:not(.dark-mode) .control-btn:hover {
     display: inline-block;
 }
 
-.expandable-tab:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
 .expandable-tab:hover .tab-icon {
     transform: scale(1.1);
 }
@@ -2753,6 +2912,7 @@ body:not(.dark-mode) .control-btn:hover {
 .expandable-tab.active {
     background: var(--christmas-red);
     color: white;
+    box-shadow: 0 4px 16px rgba(200, 16, 46, 0.4);
 }
 
 .expandable-tab.active .tab-label {
@@ -2760,6 +2920,570 @@ body:not(.dark-mode) .control-btn:hover {
     width: auto;
     margin-left: 0.5rem;
 }
+
+/* Games Dropdown */
+.games-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.games-tab-btn {
+    position: relative;
+}
+
+.games-tab-btn .dropdown-arrow {
+    margin-left: 0.5rem;
+    transition: transform 0.3s ease;
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+}
+
+.games-dropdown:hover .games-tab-btn .dropdown-arrow,
+.games-dropdown.active .games-tab-btn .dropdown-arrow {
+    opacity: 1;
+    width: 16px;
+    display: inline-block;
+}
+
+.games-dropdown:hover .games-tab-btn .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.games-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 0.5rem;
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1001;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.games-dropdown:hover .games-dropdown-menu,
+.games-dropdown.active .games-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.games-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.games-dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
+}
+
+.games-dropdown-item .game-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+/* Games tab button specific styling */
+.games-tab-btn {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.games-tab-btn:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-1px);
+}
+
+.games-dropdown.active .games-tab-btn {
+    background: var(--christmas-red);
+    color: white;
+    box-shadow: 0 4px 16px rgba(200, 16, 46, 0.4);
+}
+
+.expandable-tabs-wrapper {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Hero Buttons Games Dropdown - Minimal, just dropdown on hover */
+.glow-button-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.games-dropdown-hero {
+    position: relative;
+    display: inline-block;
+}
+
+.games-btn-hero {
+    position: relative;
+}
+
+.games-dropdown-menu-hero {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 0.5rem;
+    min-width: 160px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10000;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(255, 184, 28, 0.2);
+    pointer-events: none;
+}
+
+.games-dropdown-hero:hover .games-dropdown-menu-hero {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+}
+
+.games-dropdown-item-hero {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.games-dropdown-item-hero:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(4px);
+    box-shadow: 0 0 15px rgba(255, 184, 28, 0.2);
+}
+
+/* Light Mode Dropdown */
+body:not(.dark-mode) .games-dropdown-menu-hero {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2),
+                0 0 20px rgba(144, 238, 144, 0.3);
+}
+
+body:not(.dark-mode) .games-dropdown-item-hero {
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .games-dropdown-item-hero:hover {
+    background: rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 15px rgba(144, 238, 144, 0.3);
+}
+
+/* Light Mode - Card Maker */
+body:not(.dark-mode) .card-message {
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .card-message::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+body:not(.dark-mode) .controls-panel {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .tab-navigation {
+    border-bottom-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .tab-btn {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+body:not(.dark-mode) .tab-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .tab-btn.active {
+    color: white;
+}
+
+body:not(.dark-mode) .tab-navigation::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark-mode) .tab-contents::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark-mode) .control-group h3,
+body:not(.dark-mode) .control-group label {
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .color-btn,
+body:not(.dark-mode) .template-btn,
+body:not(.dark-mode) .align-btn,
+body:not(.dark-mode) .position-btn {
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark-mode) .template-btn {
+    color: #1a1a1a;
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .template-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark-mode) .template-btn.active {
+    color: white;
+}
+
+body:not(.dark-mode) .decoration-btn {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .decoration-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark-mode) .text-size-control label,
+body:not(.dark-mode) .text-color-control label,
+body:not(.dark-mode) .text-align-control label,
+body:not(.dark-mode) .text-font-control label {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+body:not(.dark-mode) .align-btn {
+    color: #1a1a1a;
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .align-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark-mode) .align-btn.active {
+    color: white;
+}
+
+body:not(.dark-mode) .position-btn {
+    color: #1a1a1a;
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .position-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1a1a;
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark-mode) .position-btn.active {
+    color: white;
+}
+
+body:not(.dark-mode) .action-btn {
+    color: #1a1a1a;
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .action-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Light Mode - Game Cards */
+body:not(.dark-mode) .game-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .game-card h3,
+body:not(.dark-mode) .game-card p {
+    color: #1a1a1a;
+}
+
+/* Light Mode - Calendar */
+body:not(.dark-mode) .calendar-day {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .calendar-day.opened {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Light Mode - Modal */
+body:not(.dark-mode) .modal-content {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .modal-close {
+    color: #1a1a1a;
+}
+
+/* Light Mode - Sock Form */
+body:not(.dark-mode) .sock-form-container,
+body:not(.dark-mode) .sock-map-container,
+body:not(.dark-mode) .sock-feed-container,
+body:not(.dark-mode) .sock-rankings-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .form-label,
+body:not(.dark-mode) .form-title,
+body:not(.dark-mode) .map-title,
+body:not(.dark-mode) .feed-title,
+body:not(.dark-mode) .rankings-title {
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .sock-message,
+body:not(.dark-mode) .sock-search,
+body:not(.dark-mode) .country-filter {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .sock-message::placeholder,
+body:not(.dark-mode) .sock-search::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+body:not(.dark-mode) .feed-item,
+body:not(.dark-mode) .rankings-item {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .feed-item-text,
+body:not(.dark-mode) .feed-item-location,
+body:not(.dark-mode) .feed-item-time {
+    color: #1a1a1a;
+}
+
+/* Light Mode - Share Christmas */
+body:not(.dark-mode) .share-christmas-form-container,
+body:not(.dark-mode) .share-christmas-feed-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .share-christmas-item {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body:not(.dark-mode) .share-christmas-item-message {
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .share-christmas-item-location {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+/* Light Mode - Quiz */
+body:not(.dark-mode) .quiz-option {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .quiz-option:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Light Mode - Games */
+body:not(.dark-mode) .trivia-option,
+body:not(.dark-mode) .memory-card,
+body:not(.dark-mode) .wordle-key,
+body:not(.dark-mode) .wordsearch-cell {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .trivia-option:hover,
+body:not(.dark-mode) .memory-card:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Light Mode - Inputs and Selects */
+body:not(.dark-mode) input[type="text"],
+body:not(.dark-mode) input[type="number"],
+body:not(.dark-mode) textarea,
+body:not(.dark-mode) select {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) input::placeholder,
+body:not(.dark-mode) textarea::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+/* Light Mode - Additional Elements */
+body:not(.dark-mode) .option-label {
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .option-label:hover {
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .size-display,
+body:not(.dark-mode) .char-counter {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+body:not(.dark-mode) .clear-btn {
+    color: #1a1a1a;
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .clear-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+body:not(.dark-mode) .upload-placeholder {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .upload-placeholder p {
+    color: rgba(0, 0, 0, 0.7);
+}
+
+body:not(.dark-mode) .font-select {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .size-slider {
+    accent-color: var(--christmas-red);
+}
+
+body:not(.dark-mode) .hang-sock-btn-large,
+body:not(.dark-mode) .action-btn.primary {
+    color: white;
+    background: var(--christmas-red);
+}
+
+body:not(.dark-mode) .hang-sock-btn-large:hover,
+body:not(.dark-mode) .action-btn.primary:hover {
+    background: var(--christmas-light-red);
+}
+
+/* Light Mode - Leaderboard */
+body:not(.dark-mode) .leaderboard-tab {
+    color: rgba(0, 0, 0, 0.7);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+body:not(.dark-mode) .leaderboard-tab.active {
+    color: white;
+    background: var(--christmas-red);
+}
+
+body:not(.dark-mode) .leaderboard-item {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+}
+
+/* Light Mode - Gift Exchange */
+body:not(.dark-mode) .participant-input input {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .participants-list {
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.1);
+}
+
+body:not(.dark-mode) .participant-item {
+    background: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .pairs-result {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.15);
+    color: #1a1a1a;
+}
+
+body:not(.dark-mode) .example-pair {
+    color: #1a1a1a;
+}
+
+/* Light Mode - Empty State Messages */
+body:not(.dark-mode) .empty-state-message {
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.empty-state-message {
+    color: rgba(255, 255, 255, 0.5);
+}
+
 
 @media (max-width: 768px) {
     .expandable-tabs-nav {
@@ -2800,6 +3524,20 @@ body:not(.dark-mode) .control-btn:hover {
     .expandable-tab:hover .tab-label,
     .expandable-tab.active .tab-label {
         display: inline-block;
+    }
+    
+    /* Mobile dropdown adjustments */
+    .games-dropdown-menu {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        min-width: 200px;
+        max-width: 90vw;
+    }
+    
+    .games-dropdown:hover .games-dropdown-menu,
+    .games-dropdown.active .games-dropdown-menu {
+        transform: translateX(-50%) translateY(0);
     }
 }
 
@@ -2930,8 +3668,8 @@ body:not(.dark-mode) .control-btn:hover {
     position: relative;
     overflow: hidden;
     cursor: move;
-    border: none;
-    box-shadow: none;
+    border: none !important;
+    box-shadow: none !important;
     height: 100%;
     min-height: 600px;
 }
@@ -5643,6 +6381,10 @@ body:not(.dark-mode) .share-copy-btn:hover {
     padding: 3rem 1rem;
     font-style: italic;
     grid-column: 1 / -1;
+}
+
+body:not(.dark-mode) .empty-feed-message {
+    color: rgba(0, 0, 0, 0.6);
 }
 
 @media (max-width: 768px) {

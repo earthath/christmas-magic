@@ -545,7 +545,7 @@ function initHeroSection() {
         lottiePlayer.addEventListener('error', (e) => {
             console.error('Lottie animation error:', e);
             // Try with original path if encoded failed
-            const originalSrc = 'decorate/Fun Christmas tree.json';
+            const originalSrc = 'decorate/Merry XMas.json';
             if (lottiePlayer.getAttribute('src') !== originalSrc) {
                 lottiePlayer.setAttribute('src', originalSrc);
             }
@@ -602,20 +602,104 @@ function initHeroSection() {
         updateTreeRotation();
     }
     
-    const heroButtons = document.querySelectorAll('.hero-btn');
+    // Initialize Cats Lottie animation
+    const catsLottiePlayer = document.getElementById('catsLottie');
+    const catsContainer = document.querySelector('.cats-lottie-container');
+    
+    if (catsLottiePlayer) {
+        // Ensure the path is correct (handle spaces in filename)
+        const currentCatsSrc = catsLottiePlayer.getAttribute('src');
+        if (currentCatsSrc && currentCatsSrc.includes(' ')) {
+            // URL encode spaces if needed
+            const encodedCatsSrc = currentCatsSrc.replace(/ /g, '%20');
+            catsLottiePlayer.setAttribute('src', encodedCatsSrc);
+        }
+        
+        // Wait for Lottie player to be ready
+        catsLottiePlayer.addEventListener('ready', () => {
+            console.log('Cats Lottie animation loaded successfully');
+        });
+        
+        // Handle errors
+        catsLottiePlayer.addEventListener('error', (e) => {
+            console.error('Cats Lottie animation error:', e);
+            // Try with original path if encoded failed
+            const originalCatsSrc = 'decorate/Cats for new year and christmas.json';
+            if (catsLottiePlayer.getAttribute('src') !== originalCatsSrc) {
+                catsLottiePlayer.setAttribute('src', originalCatsSrc);
+            }
+        });
+    }
+    
+    // Hero buttons - handle regular buttons
+    const heroButtons = document.querySelectorAll('.glow-button:not(.games-btn-hero)');
     heroButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
             // Create click ripple
             createRippleEffect(btn, e);
             
             const section = btn.dataset.section;
-            switchSection(section);
+            if (section) {
+                switchSection(section);
+                
+                // Update expandable tabs
+                const expandableTabs = document.querySelectorAll('.expandable-tab');
+                expandableTabs.forEach(tab => {
+                    tab.classList.remove('active');
+                    if (tab.dataset.section === section) {
+                        tab.classList.add('active');
+                    }
+                });
+                
+                // Hide hero and show nav
+                document.getElementById('hero').style.display = 'none';
+                const expandableNav = document.getElementById('expandableTabsNav');
+                if (expandableNav) expandableNav.style.display = 'block';
+                
+                // Initialize map if going to sock-hanging
+                if (section === 'sock-hanging' && !map) {
+                    setTimeout(() => {
+                        initMap();
+                        loadSocksOnMap();
+                    }, 300);
+                }
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    });
+    
+    // Games dropdown for hero buttons
+    const gamesDropdownHero = document.getElementById('gamesDropdownHero');
+    const gamesBtnHero = gamesDropdownHero?.querySelector('.games-btn-hero');
+    const gamesDropdownItemsHero = document.querySelectorAll('.games-dropdown-item-hero');
+    const gamesDropdownMenu = gamesDropdownHero?.querySelector('.games-dropdown-menu-hero');
+    
+    // Update dropdown position on hover to ensure it's visible above other content
+    if (gamesDropdownHero && gamesDropdownMenu) {
+        gamesDropdownHero.addEventListener('mouseenter', () => {
+            const btnRect = gamesBtnHero.getBoundingClientRect();
+            gamesDropdownMenu.style.position = 'fixed';
+            gamesDropdownMenu.style.top = `${btnRect.bottom + 12}px`;
+            gamesDropdownMenu.style.left = `${btnRect.left + (btnRect.width / 2)}px`;
+            gamesDropdownMenu.style.transform = 'translateX(-50%) translateY(0)';
+        });
+    }
+    
+    if (gamesBtnHero) {
+        // Click on Games button - go to games section
+        gamesBtnHero.addEventListener('click', (e) => {
+            e.stopPropagation();
+            createRippleEffect(gamesBtnHero, e);
+            
+            switchSection('games');
             
             // Update expandable tabs
             const expandableTabs = document.querySelectorAll('.expandable-tab');
             expandableTabs.forEach(tab => {
                 tab.classList.remove('active');
-                if (tab.dataset.section === section) {
+                if (tab.dataset.section === 'games') {
                     tab.classList.add('active');
                 }
             });
@@ -625,18 +709,70 @@ function initHeroSection() {
             const expandableNav = document.getElementById('expandableTabsNav');
             if (expandableNav) expandableNav.style.display = 'block';
             
-            // Initialize map if going to sock-hanging
-            if (section === 'sock-hanging' && !map) {
-                setTimeout(() => {
-                    initMap();
-                    loadSocksOnMap();
-                }, 300);
-            }
-            
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if (soundEnabled) playSound('click');
         });
-    });
+        
+        // Handle dropdown item clicks
+        gamesDropdownItemsHero.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const game = item.dataset.game;
+                if (game) {
+                    // Go to games section first
+                    switchSection('games');
+                    
+                    // Update expandable tabs
+                    const expandableTabs = document.querySelectorAll('.expandable-tab');
+                    expandableTabs.forEach(tab => {
+                        tab.classList.remove('active');
+                        if (tab.dataset.section === 'games') {
+                            tab.classList.add('active');
+                        }
+                    });
+                    
+                    // Hide hero and show nav
+                    document.getElementById('hero').style.display = 'none';
+                    const expandableNav = document.getElementById('expandableTabsNav');
+                    if (expandableNav) expandableNav.style.display = 'block';
+                    
+                    // Then start the selected game
+                    setTimeout(() => {
+                        // Hide games grid
+                        const gamesGrid = document.querySelector('.games-grid');
+                        if (gamesGrid) gamesGrid.style.display = 'none';
+                        
+                        // Hide all game containers
+                        document.querySelectorAll('.game-container').forEach(c => {
+                            c.style.display = 'none';
+                        });
+                        
+                        // Show selected game
+                        if (game === 'trivia') {
+                            initTrivia();
+                            document.getElementById('triviaGame').style.display = 'block';
+                        } else if (game === 'memory') {
+                            initMemory();
+                            document.getElementById('memoryGame').style.display = 'block';
+                        } else if (game === 'wordsearch') {
+                            initWordSearch();
+                            document.getElementById('wordsearchGame').style.display = 'block';
+                        } else if (game === 'wordle') {
+                            initWordle();
+                            document.getElementById('wordleGame').style.display = 'block';
+                        }
+                    }, 100);
+                    
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    if (soundEnabled) playSound('click');
+                }
+            });
+        });
+    }
 }
 
 // Christmas Countdown Timer
@@ -1265,18 +1401,20 @@ function initCardMaker() {
         });
     }
     
-    // Card Border Toggle
+    // Card Border Toggle - Always remove border
     if (cardBorder) {
         cardBorder.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                cardPreview.style.border = '3px solid rgba(255, 255, 255, 0.3)';
-                cardPreview.style.boxShadow = 'none';
-            } else {
-                cardPreview.style.border = 'none';
-                cardPreview.style.boxShadow = 'none';
-            }
+            // Always set border to none regardless of checkbox state
+            cardPreview.style.border = 'none';
+            cardPreview.style.boxShadow = 'none';
             saveCardState();
         });
+    }
+    
+    // Ensure border is always removed on initialization
+    if (cardPreview) {
+        cardPreview.style.border = 'none';
+        cardPreview.style.boxShadow = 'none';
     }
     
     // Share Card
@@ -1385,7 +1523,7 @@ function initCardMaker() {
         
         if (textShadow) textShadow.checked = true;
         if (cardBorder) cardBorder.checked = false;
-        cardPreview.style.border = '1px solid rgba(255, 255, 255, 0.1)';
+        cardPreview.style.border = 'none';
         cardPreview.style.boxShadow = 'none';
         
         const decorations = cardContent.querySelectorAll('.decoration-item');
@@ -3515,7 +3653,7 @@ function initSockHanging() {
                 // Format: "City, Country" (e.g., "Seoul, Korea" or "Bangkok, Thailand")
                 location = {
                     name: cityName ? `${cityName}, ${countryName}` : `${countryName}`,
-                    country: country,
+                    country: countryName, // Save country name WITHOUT emoji
                     lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
                     lng: userLocation.lng + (Math.random() - 0.5) * 0.01
                 };
@@ -3526,7 +3664,7 @@ function initSockHanging() {
                 const countryName = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🇹🇭|🇲🇾|🇮🇩|🇻🇳|🌍/g, '').trim();
                 location = {
                     name: countryName || 'Unknown',
-                    country: country,
+                    country: countryName, // Save country name WITHOUT emoji
                     lat: userLocation.lat + (Math.random() - 0.5) * 0.01,
                     lng: userLocation.lng + (Math.random() - 0.5) * 0.01
                 };
@@ -3833,11 +3971,11 @@ function addSockToMap(sock) {
     });
 
     // Create popup content
+    // sock.city already contains "City, Country" format
     const popupContent = `
         <div style="text-align: center; padding: 0.5rem;">
             <div style="font-size: 2rem; margin-bottom: 0.5rem;">${sock.emoji}</div>
-            <div style="font-weight: 600; margin-bottom: 0.25rem;">${sock.city}</div>
-            <div style="font-size: 0.85rem; color: #666;">${sock.country}</div>
+            <div style="font-weight: 600; margin-bottom: 0.25rem;">📍 ${sock.city || 'Unknown Location'}</div>
             ${sock.message ? `<div style="margin-top: 0.5rem; font-size: 0.9rem; font-style: italic;">"${sock.message}"</div>` : ''}
         </div>
     `;
@@ -3862,11 +4000,12 @@ function renderFeed() {
         const time = formatTime(sock.timestamp);
         const messageText = sock.message ? `: "${sock.message}"` : '';
         
+        // sock.city already contains "City, Country" format, so just display it
         feedItem.innerHTML = `
             <div class="feed-item-icon">${sock.emoji}</div>
             <div class="feed-item-content">
-                <div class="feed-item-text">Sock hung in ${sock.city}${messageText}</div>
-                <div class="feed-item-location">${sock.country}</div>
+                <div class="feed-item-text">Sock hung in ${sock.city || 'Unknown Location'}${messageText}</div>
+                <div class="feed-item-location">📍 ${sock.city || 'Unknown Location'}</div>
             </div>
             <div class="feed-item-time">${time}</div>
         `;
@@ -3875,7 +4014,7 @@ function renderFeed() {
     });
 
     if (feedItems.length === 0) {
-        sockFeed.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 2rem;">No activity yet. Hang your first sock!</div>';
+        sockFeed.innerHTML = '<div class="empty-state-message" style="text-align: center; padding: 2rem;">No activity yet. Hang your first sock!</div>';
     }
 }
 
@@ -3903,7 +4042,7 @@ function renderRankings() {
         .slice(0, 10);
 
     if (rankings.length === 0) {
-        rankingsList.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 2rem;">No rankings yet. Start hanging socks!</div>';
+        rankingsList.innerHTML = '<div class="empty-state-message" style="text-align: center; padding: 2rem;">No rankings yet. Start hanging socks!</div>';
         return;
     }
 
@@ -4076,8 +4215,8 @@ function shareSockImage(sock) {
             
             // Show share options modal with Instagram Story
             const shareText = sock.message 
-                ? `${sock.message}\n\n📍 ${sock.city || 'Unknown'}, ${sock.country || 'World'}`
-                : `I hung a sock in ${sock.city || 'the world'}, ${sock.country || 'World'}! 🧦🎄`;
+                ? `${sock.message}\n\n📍 ${sock.city || 'Unknown Location'}`
+                : `I hung a sock in ${sock.city || 'Unknown Location'}! 🧦🎄`;
             showShareOptions('sock', shareText, blob, 'I Hung a Sock!');
         }, 'image/png');
     } catch (error) {
@@ -4606,7 +4745,7 @@ async function updateLeaderboard(gameType) {
     leaderboardContent.innerHTML = '';
     
     if (sorted.length === 0) {
-        leaderboardContent.innerHTML = '<div style="text-align: center; color: rgba(255,255,255,0.5); padding: 2rem;">No scores yet. Play to get on the leaderboard!</div>';
+        leaderboardContent.innerHTML = '<div class="empty-state-message" style="text-align: center; padding: 2rem;">No scores yet. Play to get on the leaderboard!</div>';
         return;
     }
     
@@ -6248,30 +6387,37 @@ function initShareChristmas() {
                     getLocationBtn.style.opacity = '1';
                     getLocationBtn.style.cursor = 'pointer';
                     
-                    try {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        console.log('Location received:', lat, lng);
-                        
-                        const country = getCountryFromLocation(lat, lng);
-                        const city = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🌍/g, '').trim();
-                        const locationText = `${city}, ${country}`;
-                        locationInput.value = locationText;
-                        
-                        if (locationStatus) {
-                            locationStatus.textContent = `📍 ${locationText}`;
-                            locationStatus.style.color = 'var(--christmas-gold)';
+                    // Use async IIFE to handle await
+                    (async () => {
+                        try {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            console.log('Location received:', lat, lng);
+                            
+                            // Get real city name from coordinates using reverse geocoding
+                            const cityName = await getCityNameFromCoordinates(lat, lng);
+                            const country = getCountryFromLocation(lat, lng);
+                            const countryName = country.replace(/🇰🇷|🇯🇵|🇺🇸|🇬🇧|🇫🇷|🇦🇺|🇨🇦|🇩🇪|🇷🇺|🇨🇳|🇹🇭|🇲🇾|🇮🇩|🇻🇳|🌍/g, '').trim();
+                            
+                            // Format: "City, Country" (e.g., "Seoul, Korea" or "Bangkok, Thailand")
+                            const locationText = cityName ? `${cityName}, ${countryName}` : `${countryName}`;
+                            locationInput.value = locationText;
+                            
+                            if (locationStatus) {
+                                locationStatus.textContent = `📍 ${locationText}`;
+                                locationStatus.style.color = 'var(--christmas-gold)';
+                            }
+                            showSuccess('Location detected!');
+                            if (soundEnabled) playSound('success');
+                        } catch (error) {
+                            console.error('Location processing error:', error);
+                            if (locationStatus) {
+                                locationStatus.textContent = '❌ Error processing location. Please try again.';
+                                locationStatus.style.color = 'var(--christmas-red)';
+                            }
+                            showError('Error processing location. Please try again.');
                         }
-                        showSuccess('Location detected!');
-                        if (soundEnabled) playSound('success');
-                    } catch (error) {
-                        console.error('Location processing error:', error);
-                        if (locationStatus) {
-                            locationStatus.textContent = '❌ Error processing location. Please try again.';
-                            locationStatus.style.color = 'var(--christmas-red)';
-                        }
-                        showError('Error processing location. Please try again.');
-                    }
+                    })();
                 },
                 (error) => {
                     if (timeoutCleared) return; // Already handled by timeout
