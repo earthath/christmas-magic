@@ -411,34 +411,47 @@ const quizResults = {
     }
 };
 
+// EMERGENCY: Run cleanup immediately on script load (before DOM is ready)
+(function() {
+    if (typeof document !== 'undefined' && document.body) {
+        const modals = document.querySelectorAll('.sphere-image-modal');
+        modals.forEach(m => {
+            try { m.remove(); } catch(e) {}
+            try { m.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important;'; } catch(e) {}
+        });
+    }
+})();
+
 // Global function to clean up any lingering modals (defined early for use in global handlers)
 function cleanupSphereModals() {
+    // AGGRESSIVE cleanup - remove ALL modals immediately
     const existingModals = document.querySelectorAll('.sphere-image-modal');
     existingModals.forEach(modal => {
-        // Remove event listeners
-        if (modal._closeOnBackground) {
-            modal.removeEventListener('click', modal._closeOnBackground);
-            modal.removeEventListener('touchend', modal._closeOnBackground);
-        }
-        // Remove immediately
-        modal.removeAttribute('data-modal-active');
-        modal.style.display = 'none';
-        modal.style.pointerEvents = 'none';
-        modal.style.zIndex = '-1';
-        modal.style.visibility = 'hidden';
-        modal.style.opacity = '0';
-        if (modal.parentNode) {
-            modal.remove();
+        // Force remove immediately without any checks
+        try {
+            modal.removeAttribute('data-modal-active');
+            modal.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important;';
+            if (modal.parentNode) {
+                modal.remove();
+            }
+        } catch (err) {
+            // If remove fails, just hide it completely
+            modal.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important;';
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
         }
     });
     
     // Also check for any elements with high z-index that might be blocking
     const allElements = document.querySelectorAll('*');
     allElements.forEach(el => {
-        const zIndex = window.getComputedStyle(el).zIndex;
-        if (zIndex && parseInt(zIndex) >= 10000 && el.classList.contains('sphere-image-modal')) {
-            // Force remove any sphere modals with high z-index
-            el.remove();
+        if (el.classList && el.classList.contains('sphere-image-modal')) {
+            try {
+                el.remove();
+            } catch (err) {
+                el.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important;';
+            }
         }
     });
 }
@@ -463,17 +476,46 @@ window.checkForBlockingModals = function() {
     return modals;
 };
 
+// EMERGENCY: Global click handler to force cleanup if anything is blocking
+window.addEventListener('click', function(e) {
+    // If click seems to be blocked, force cleanup
+    const modals = document.querySelectorAll('.sphere-image-modal');
+    if (modals.length > 0) {
+        // Check if click target is a button or interactive element
+        const target = e.target;
+        const isInteractive = target.tagName === 'BUTTON' || 
+                             target.tagName === 'INPUT' || 
+                             target.tagName === 'A' ||
+                             target.closest('button') ||
+                             target.closest('form');
+        if (isInteractive) {
+            // Force cleanup before allowing click
+            cleanupSphereModals();
+        }
+    }
+}, false); // Use bubble phase, not capture
+
 // Note: cleanupSphereModals() is called by individual button handlers to prevent blocking
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // CRITICAL: Clean up any modals that might be blocking on page load
+    // CRITICAL: Clean up any modals that might be blocking on page load - RUN IMMEDIATELY
     cleanupSphereModals();
     
-    // Also run cleanup after a short delay to catch any modals created during initialization
+    // Run cleanup multiple times to ensure nothing is blocking
+    setTimeout(() => cleanupSphereModals(), 0);
+    setTimeout(() => cleanupSphereModals(), 50);
     setTimeout(() => cleanupSphereModals(), 100);
+    setTimeout(() => cleanupSphereModals(), 200);
     setTimeout(() => cleanupSphereModals(), 500);
     setTimeout(() => cleanupSphereModals(), 1000);
+    
+    // Also run cleanup when page becomes visible
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            cleanupSphereModals();
+        }
+    });
     
     try {
         initModernNavbar();
@@ -7651,10 +7693,7 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             console.log('Closing modal'); // Debug log
             
             // Immediately remove from DOM - don't wait
-            if (modal._closeOnBackground) {
-                modal.removeEventListener('click', modal._closeOnBackground);
-                modal.removeEventListener('touchend', modal._closeOnBackground);
-            }
+            // No need to remove listeners since we're not using document listeners anymore
             
             // Remove immediately - use multiple methods to ensure removal
             modal.removeAttribute('data-modal-active');
@@ -7720,60 +7759,8 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             }
         }, 100);
         
-        // Close on background click/touch - but only if not clicking on content
-        const closeOnBackground = (e) => {
-            // Check if modal is still active before processing
-            if (!modal || !modal.parentNode || modal.getAttribute('data-modal-active') !== 'true') {
-                return; // Modal is closed, don't process
-            }
-            
-            // Check if click is outside the modal content (since modal background has pointer-events: none)
-            const modalContent = modal.querySelector('.sphere-modal-content');
-            if (modalContent && !modalContent.contains(e.target)) {
-                // Click is outside modal content, close it
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Closing modal from background'); // Debug log
-                
-                // Remove event listeners
-                if (modal._closeOnBackground) {
-                    document.removeEventListener('click', modal._closeOnBackground);
-                    document.removeEventListener('touchend', modal._closeOnBackground);
-                }
-                
-                // Remove immediately - use same aggressive cleanup
-                modal.removeAttribute('data-modal-active');
-                modal.style.display = 'none';
-                modal.style.pointerEvents = 'none';
-                modal.style.zIndex = '-1';
-                modal.style.visibility = 'hidden';
-                modal.style.opacity = '0';
-                modal.style.position = 'absolute';
-                modal.style.left = '-9999px';
-                
-                // Remove from DOM immediately
-                if (modal.parentNode) {
-                    try {
-                        modal.remove();
-                    } catch (err) {
-                        console.error('Error removing modal:', err);
-                        modal.style.display = 'none';
-                        modal.style.pointerEvents = 'none';
-                    }
-                }
-                
-                selectedImage = null;
-                
-                // Force cleanup
-                setTimeout(() => cleanupSphereModals(), 0);
-            }
-        };
-        
-        // Store reference to handler for cleanup
-        modal._closeOnBackground = closeOnBackground;
-        // Since modal background has pointer-events: none, attach to document instead
-        document.addEventListener('click', closeOnBackground, { passive: false });
-        document.addEventListener('touchend', closeOnBackground, { passive: false });
+        // Background click handler - completely removed to prevent blocking
+        // Users can close via the X button only
         
         document.body.appendChild(modal);
         
@@ -8067,31 +8054,7 @@ function initShareChristmas() {
     // Clean up any lingering modals that might be blocking clicks - do this FIRST
     cleanupSphereModals();
     
-    // Also add a click handler to the document that ensures modals don't block
-    const ensureNoBlockingModals = (e) => {
-        const blockingModals = document.querySelectorAll('.sphere-image-modal[data-modal-active="true"]');
-        if (blockingModals.length > 0) {
-            // Check if click is on a button or form element
-            const target = e.target;
-            const isInteractive = target.tagName === 'BUTTON' || 
-                                 target.tagName === 'INPUT' || 
-                                 target.tagName === 'TEXTAREA' ||
-                                 target.tagName === 'SELECT' ||
-                                 target.closest('button') ||
-                                 target.closest('form') ||
-                                 target.closest('.share-christmas-form') ||
-                                 target.closest('#shareChristmasForm');
-            
-            if (isInteractive) {
-                // Force cleanup if clicking on interactive elements
-                cleanupSphereModals();
-            }
-        }
-    };
-    
-    // Add this handler with high priority (capture phase)
-    document.addEventListener('click', ensureNoBlockingModals, true);
-    document.addEventListener('touchend', ensureNoBlockingModals, true);
+    // REMOVED: Document-level click handlers that were blocking all clicks
     
     // Initialize sphere view automatically when section loads
     const container = document.getElementById('imgSphereContainer');
