@@ -426,16 +426,55 @@ function cleanupSphereModals() {
         modal.style.pointerEvents = 'none';
         modal.style.zIndex = '-1';
         modal.style.visibility = 'hidden';
+        modal.style.opacity = '0';
         if (modal.parentNode) {
             modal.remove();
         }
     });
+    
+    // Also check for any elements with high z-index that might be blocking
+    const allElements = document.querySelectorAll('*');
+    allElements.forEach(el => {
+        const zIndex = window.getComputedStyle(el).zIndex;
+        if (zIndex && parseInt(zIndex) >= 10000 && el.classList.contains('sphere-image-modal')) {
+            // Force remove any sphere modals with high z-index
+            el.remove();
+        }
+    });
 }
+
+// Debug function to check for blocking modals (can be called from console)
+window.checkForBlockingModals = function() {
+    const modals = document.querySelectorAll('.sphere-image-modal');
+    console.log('Found modals:', modals.length);
+    modals.forEach((modal, i) => {
+        const styles = window.getComputedStyle(modal);
+        console.log(`Modal ${i}:`, {
+            display: styles.display,
+            zIndex: styles.zIndex,
+            pointerEvents: styles.pointerEvents,
+            visibility: styles.visibility,
+            opacity: styles.opacity,
+            position: styles.position,
+            dataActive: modal.getAttribute('data-modal-active'),
+            inDOM: modal.parentNode !== null
+        });
+    });
+    return modals;
+};
 
 // Note: cleanupSphereModals() is called by individual button handlers to prevent blocking
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    // CRITICAL: Clean up any modals that might be blocking on page load
+    cleanupSphereModals();
+    
+    // Also run cleanup after a short delay to catch any modals created during initialization
+    setTimeout(() => cleanupSphereModals(), 100);
+    setTimeout(() => cleanupSphereModals(), 500);
+    setTimeout(() => cleanupSphereModals(), 1000);
+    
     try {
         initModernNavbar();
         initNavigation();
@@ -7464,6 +7503,7 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         const modal = document.createElement('div');
         modal.className = 'sphere-image-modal';
         modal.setAttribute('data-modal-active', 'true');
+        modal.setAttribute('id', 'sphereImageModal_' + Date.now()); // Unique ID for tracking
         modal.style.cssText = `
             position: fixed;
             inset: 0;
@@ -7477,6 +7517,23 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             overflow-y: auto;
             pointer-events: auto;
         `;
+        
+        // Add a safeguard: if modal is blocking buttons, allow clicks through to buttons
+        modal.addEventListener('click', (e) => {
+            const target = e.target;
+            // If clicking on a button or form element outside modal content, close modal
+            if (target.tagName === 'BUTTON' || 
+                target.tagName === 'INPUT' || 
+                target.closest('button') ||
+                target.closest('form') ||
+                target.closest('.share-christmas-form')) {
+                // Check if it's outside the modal content
+                const modalContent = modal.querySelector('.sphere-modal-content');
+                if (modalContent && !modalContent.contains(target)) {
+                    closeModal(e);
+                }
+            }
+        }, true);
         
         const time = shareData && shareData.timestamp 
             ? (shareData.timestamp instanceof Date 
@@ -7611,19 +7668,33 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 modal.removeEventListener('touchend', modal._closeOnBackground);
             }
             
-            // Remove immediately
+            // Remove immediately - use multiple methods to ensure removal
             modal.removeAttribute('data-modal-active');
             modal.style.display = 'none';
             modal.style.pointerEvents = 'none';
             modal.style.zIndex = '-1';
             modal.style.visibility = 'hidden';
+            modal.style.opacity = '0';
+            modal.style.position = 'absolute'; // Change position to prevent blocking
+            modal.style.left = '-9999px'; // Move off screen
             
             // Remove from DOM immediately
             if (modal.parentNode) {
-                modal.remove();
+                try {
+                    modal.remove();
+                } catch (err) {
+                    console.error('Error removing modal:', err);
+                    // Fallback: hide it completely
+                    modal.style.display = 'none';
+                    modal.style.pointerEvents = 'none';
+                }
             }
             
             selectedImage = null;
+            
+            // Force a cleanup check
+            setTimeout(() => cleanupSphereModals(), 0);
+            
             return false;
         };
         
@@ -7680,19 +7751,31 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                     modal.removeEventListener('touchend', modal._closeOnBackground);
                 }
                 
-                // Remove immediately
+                // Remove immediately - use same aggressive cleanup
                 modal.removeAttribute('data-modal-active');
                 modal.style.display = 'none';
                 modal.style.pointerEvents = 'none';
                 modal.style.zIndex = '-1';
                 modal.style.visibility = 'hidden';
+                modal.style.opacity = '0';
+                modal.style.position = 'absolute';
+                modal.style.left = '-9999px';
                 
                 // Remove from DOM immediately
                 if (modal.parentNode) {
-                    modal.remove();
+                    try {
+                        modal.remove();
+                    } catch (err) {
+                        console.error('Error removing modal:', err);
+                        modal.style.display = 'none';
+                        modal.style.pointerEvents = 'none';
+                    }
                 }
                 
                 selectedImage = null;
+                
+                // Force cleanup
+                setTimeout(() => cleanupSphereModals(), 0);
             }
         };
         
@@ -7990,8 +8073,34 @@ function showSphereView() {
 }
 
 function initShareChristmas() {
-    // Clean up any lingering modals that might be blocking clicks
+    // Clean up any lingering modals that might be blocking clicks - do this FIRST
     cleanupSphereModals();
+    
+    // Also add a click handler to the document that ensures modals don't block
+    const ensureNoBlockingModals = (e) => {
+        const blockingModals = document.querySelectorAll('.sphere-image-modal[data-modal-active="true"]');
+        if (blockingModals.length > 0) {
+            // Check if click is on a button or form element
+            const target = e.target;
+            const isInteractive = target.tagName === 'BUTTON' || 
+                                 target.tagName === 'INPUT' || 
+                                 target.tagName === 'TEXTAREA' ||
+                                 target.tagName === 'SELECT' ||
+                                 target.closest('button') ||
+                                 target.closest('form') ||
+                                 target.closest('.share-christmas-form') ||
+                                 target.closest('#shareChristmasForm');
+            
+            if (isInteractive) {
+                // Force cleanup if clicking on interactive elements
+                cleanupSphereModals();
+            }
+        }
+    };
+    
+    // Add this handler with high priority (capture phase)
+    document.addEventListener('click', ensureNoBlockingModals, true);
+    document.addEventListener('touchend', ensureNoBlockingModals, true);
     
     // Initialize sphere view automatically when section loads
     const container = document.getElementById('imgSphereContainer');
