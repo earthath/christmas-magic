@@ -411,6 +411,29 @@ const quizResults = {
     }
 };
 
+// Global function to clean up any lingering modals (defined early for use in global handlers)
+function cleanupSphereModals() {
+    const existingModals = document.querySelectorAll('.sphere-image-modal');
+    existingModals.forEach(modal => {
+        // Remove event listeners
+        if (modal._closeOnBackground) {
+            modal.removeEventListener('click', modal._closeOnBackground);
+            modal.removeEventListener('touchend', modal._closeOnBackground);
+        }
+        // Remove immediately
+        modal.removeAttribute('data-modal-active');
+        modal.style.display = 'none';
+        modal.style.pointerEvents = 'none';
+        modal.style.zIndex = '-1';
+        modal.style.visibility = 'hidden';
+        if (modal.parentNode) {
+            modal.remove();
+        }
+    });
+}
+
+// Note: cleanupSphereModals() is called by individual button handlers to prevent blocking
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     try {
@@ -7571,7 +7594,7 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         // Close button handler - use multiple event types for mobile compatibility
         const closeModal = (e) => {
             // Check if modal is still active
-            if (modal.getAttribute('data-modal-active') !== 'true') {
+            if (!modal || !modal.parentNode || modal.getAttribute('data-modal-active') !== 'true') {
                 return false; // Already closed
             }
             
@@ -7582,24 +7605,23 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             }
             console.log('Closing modal'); // Debug log
             
-            // Immediately disable modal to prevent blocking
-            modal.removeAttribute('data-modal-active');
-            modal.style.display = 'none';
-            modal.style.pointerEvents = 'none';
-            modal.style.zIndex = '-1';
-            
-            // Remove event listeners
+            // Immediately remove from DOM - don't wait
             if (modal._closeOnBackground) {
                 modal.removeEventListener('click', modal._closeOnBackground);
                 modal.removeEventListener('touchend', modal._closeOnBackground);
             }
             
-            // Remove from DOM after a brief delay to ensure cleanup
-            setTimeout(() => {
-                if (modal && modal.parentNode) {
-                    modal.remove();
-                }
-            }, 100);
+            // Remove immediately
+            modal.removeAttribute('data-modal-active');
+            modal.style.display = 'none';
+            modal.style.pointerEvents = 'none';
+            modal.style.zIndex = '-1';
+            modal.style.visibility = 'hidden';
+            
+            // Remove from DOM immediately
+            if (modal.parentNode) {
+                modal.remove();
+            }
             
             selectedImage = null;
             return false;
@@ -7642,7 +7664,7 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         // Close on background click/touch - but only if not clicking on content
         const closeOnBackground = (e) => {
             // Check if modal is still active before processing
-            if (modal.getAttribute('data-modal-active') !== 'true') {
+            if (!modal || !modal.parentNode || modal.getAttribute('data-modal-active') !== 'true') {
                 return; // Modal is closed, don't process
             }
             
@@ -7651,15 +7673,25 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Closing modal from background'); // Debug log
+                
+                // Remove event listeners
+                if (modal._closeOnBackground) {
+                    modal.removeEventListener('click', modal._closeOnBackground);
+                    modal.removeEventListener('touchend', modal._closeOnBackground);
+                }
+                
+                // Remove immediately
                 modal.removeAttribute('data-modal-active');
                 modal.style.display = 'none';
                 modal.style.pointerEvents = 'none';
                 modal.style.zIndex = '-1';
-                setTimeout(() => {
-                    if (modal && modal.parentNode) {
-                        modal.remove();
-                    }
-                }, 100);
+                modal.style.visibility = 'hidden';
+                
+                // Remove from DOM immediately
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+                
                 selectedImage = null;
             }
         };
@@ -7959,14 +7991,7 @@ function showSphereView() {
 
 function initShareChristmas() {
     // Clean up any lingering modals that might be blocking clicks
-    const existingModals = document.querySelectorAll('.sphere-image-modal');
-    existingModals.forEach(modal => {
-        modal.removeAttribute('data-modal-active');
-        modal.style.display = 'none';
-        modal.style.pointerEvents = 'none';
-        modal.style.zIndex = '-1';
-        setTimeout(() => modal.remove(), 0);
-    });
+    cleanupSphereModals();
     
     // Initialize sphere view automatically when section loads
     const container = document.getElementById('imgSphereContainer');
@@ -7999,7 +8024,9 @@ function initShareChristmas() {
     
     // Image upload
     if (imageBtn) {
-        imageBtn.addEventListener('click', () => {
+        imageBtn.addEventListener('click', (e) => {
+            // Clean up any blocking modals first
+            cleanupSphereModals();
             imageInput.click();
         });
     }
@@ -8036,7 +8063,8 @@ function initShareChristmas() {
     }
     
     if (removeImageBtn) {
-        removeImageBtn.addEventListener('click', () => {
+        removeImageBtn.addEventListener('click', (e) => {
+            cleanupSphereModals();
             imageInput.value = '';
             imagePlaceholder.style.display = 'flex';
             imagePreview.style.display = 'none';
@@ -8057,7 +8085,8 @@ function initShareChristmas() {
     
     // Get current location (required)
     if (getLocationBtn) {
-        getLocationBtn.addEventListener('click', () => {
+        getLocationBtn.addEventListener('click', (e) => {
+            cleanupSphereModals();
             if (!navigator.geolocation) {
                 if (locationStatus) {
                     locationStatus.textContent = '❌ Geolocation not supported in this browser.';
@@ -8179,6 +8208,7 @@ function initShareChristmas() {
     if (form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
+            cleanupSphereModals();
             submitChristmasShare();
         });
     }
@@ -8666,6 +8696,12 @@ function initControlMenu() {
     
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
+        // First check if there's a blocking modal and clean it up
+        const blockingModal = document.querySelector('.sphere-image-modal[data-modal-active="true"]');
+        if (blockingModal) {
+            cleanupSphereModals();
+        }
+        
         if (!controlButtonsWrapper.contains(e.target)) {
             controlButtonsWrapper.classList.remove('active');
             controlMenuToggle.classList.remove('active');
