@@ -7504,6 +7504,7 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         modal.className = 'sphere-image-modal';
         modal.setAttribute('data-modal-active', 'true');
         modal.setAttribute('id', 'sphereImageModal_' + Date.now()); // Unique ID for tracking
+        // CRITICAL: Make background NOT block clicks - only content is interactive
         modal.style.cssText = `
             position: fixed;
             inset: 0;
@@ -7515,25 +7516,11 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             background: rgba(0, 0, 0, 0.7);
             animation: fadeIn 0.3s ease-out;
             overflow-y: auto;
-            pointer-events: auto;
+            pointer-events: none;
         `;
         
-        // Add a safeguard: if modal is blocking buttons, allow clicks through to buttons
-        modal.addEventListener('click', (e) => {
-            const target = e.target;
-            // If clicking on a button or form element outside modal content, close modal
-            if (target.tagName === 'BUTTON' || 
-                target.tagName === 'INPUT' || 
-                target.closest('button') ||
-                target.closest('form') ||
-                target.closest('.share-christmas-form')) {
-                // Check if it's outside the modal content
-                const modalContent = modal.querySelector('.sphere-modal-content');
-                if (modalContent && !modalContent.contains(target)) {
-                    closeModal(e);
-                }
-            }
-        }, true);
+        // Note: Modal background has pointer-events: none, so clicks go through to buttons automatically
+        // No need for additional safeguards - buttons will work normally
         
         const time = shareData && shareData.timestamp 
             ? (shareData.timestamp instanceof Date 
@@ -7555,6 +7542,7 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 flex-direction: column;
                 position: relative;
                 pointer-events: auto;
+                z-index: 10001;
             ">
                 <div style="position: relative; aspect-ratio: 1; pointer-events: none;">
                     <img src="${imageSrc}" alt="Christmas share" style="width: 100%; height: 100%; object-fit: cover; pointer-events: none;" />
@@ -7739,16 +7727,18 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 return; // Modal is closed, don't process
             }
             
-            // Only close if clicking directly on the modal background, not on content
-            if (e.target === modal) {
+            // Check if click is outside the modal content (since modal background has pointer-events: none)
+            const modalContent = modal.querySelector('.sphere-modal-content');
+            if (modalContent && !modalContent.contains(e.target)) {
+                // Click is outside modal content, close it
                 e.preventDefault();
                 e.stopPropagation();
                 console.log('Closing modal from background'); // Debug log
                 
                 // Remove event listeners
                 if (modal._closeOnBackground) {
-                    modal.removeEventListener('click', modal._closeOnBackground);
-                    modal.removeEventListener('touchend', modal._closeOnBackground);
+                    document.removeEventListener('click', modal._closeOnBackground);
+                    document.removeEventListener('touchend', modal._closeOnBackground);
                 }
                 
                 // Remove immediately - use same aggressive cleanup
@@ -7781,8 +7771,9 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         
         // Store reference to handler for cleanup
         modal._closeOnBackground = closeOnBackground;
-        modal.addEventListener('click', closeOnBackground, { passive: false });
-        modal.addEventListener('touchend', closeOnBackground, { passive: false });
+        // Since modal background has pointer-events: none, attach to document instead
+        document.addEventListener('click', closeOnBackground, { passive: false });
+        document.addEventListener('touchend', closeOnBackground, { passive: false });
         
         document.body.appendChild(modal);
         
