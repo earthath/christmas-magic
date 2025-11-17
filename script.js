@@ -517,6 +517,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // MOBILE: Continuous cleanup to prevent any modals from blocking
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                    (window.innerWidth <= 768);
+    if (isMobile) {
+        // Run cleanup every 500ms on mobile to ensure no modals exist
+        setInterval(() => {
+            cleanupSphereModals();
+        }, 500);
+        
+        // Also cleanup on any touch event
+        document.addEventListener('touchstart', () => cleanupSphereModals(), { passive: true });
+        document.addEventListener('touchend', () => cleanupSphereModals(), { passive: true });
+    }
+    
     try {
         initModernNavbar();
         initNavigation();
@@ -7503,17 +7517,30 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 e.stopPropagation(); // Prevent container drag from starting
             });
             
-            // Click handler to show modal
-            imgDiv.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent container drag from interfering
+            // Click handler to show modal - DISABLED ON MOBILE
+            const handleImageClick = (e) => {
+                // On mobile, don't show modal - just prevent default behavior
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                                (window.innerWidth <= 768);
+                if (isMobile) {
+                    e.stopPropagation();
+                    return; // Don't show modal on mobile
+                }
+                
+                e.stopPropagation();
                 e.preventDefault();
-                e.stopImmediatePropagation(); // Prevent other handlers
+                e.stopImmediatePropagation();
                 console.log('Image clicked, showing modal'); // Debug log
                 selectedImage = image;
                 const shareData = imageToShareMap[image] || null;
                 showImageModal(image, shareData);
                 return false;
-            }, true); // Use capture phase
+            };
+            imgDiv.addEventListener('click', handleImageClick, false); // Use bubble, not capture
+            imgDiv.addEventListener('touchend', (e) => {
+                // On mobile touch, just prevent and don't show modal
+                e.stopPropagation();
+            }, false);
             // Prevent image drag
             const img = imgDiv.querySelector('img');
             if (img) {
@@ -7530,22 +7557,25 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
     function showImageModal(imageSrc, shareData = null) {
         console.log('showImageModal called', imageSrc, shareData); // Debug log
         
+        // CRITICAL: On mobile, don't create modal at all - just return
+        // This prevents any blocking issues
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                        (window.innerWidth <= 768);
+        if (isMobile) {
+            console.log('Mobile detected - skipping modal to prevent blocking');
+            return; // Don't create modal on mobile
+        }
+        
         // Remove any existing modal first
         const existingModal = document.querySelector('.sphere-image-modal');
         if (existingModal) {
             existingModal.remove();
-            // Also remove any event listeners that might be attached
-            const existingCloseBtn = existingModal.querySelector('.sphere-modal-close');
-            if (existingCloseBtn) {
-                const newBtn = existingCloseBtn.cloneNode(true);
-                existingCloseBtn.parentNode.replaceChild(newBtn, existingCloseBtn);
-            }
         }
         
         const modal = document.createElement('div');
         modal.className = 'sphere-image-modal';
         modal.setAttribute('data-modal-active', 'true');
-        modal.setAttribute('id', 'sphereImageModal_' + Date.now()); // Unique ID for tracking
+        modal.setAttribute('id', 'sphereImageModal_' + Date.now());
         // CRITICAL: Make background NOT block clicks - only content is interactive
         modal.style.cssText = `
             position: fixed;
@@ -7558,7 +7588,8 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             background: rgba(0, 0, 0, 0.7);
             animation: fadeIn 0.3s ease-out;
             overflow-y: auto;
-            pointer-events: none;
+            pointer-events: none !important;
+            touch-action: none !important;
         `;
         
         // Note: Modal background has pointer-events: none, so clicks go through to buttons automatically
@@ -7828,16 +7859,8 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
     function handleTouchStart(e) {
         // Don't start dragging if touching an image
         if (e.target.closest('.sphere-image-item')) {
-            // Handle image click on touch
-            const imgItem = e.target.closest('.sphere-image-item');
-            if (imgItem) {
-                const img = imgItem.querySelector('img');
-                if (img && img.src) {
-                    selectedImage = img.src;
-                    const shareData = imageToShareMap[img.src] || null;
-                    showImageModal(img.src, shareData);
-                }
-            }
+            // DISABLED: Don't show modal on mobile touch - it blocks everything
+            // Just prevent dragging, don't show modal
             return;
         }
         e.preventDefault();
