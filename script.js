@@ -7408,12 +7408,15 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             y = y2;
             z = z2;
             
-            const fadeZoneStart = -10;
-            const fadeZoneEnd = -30;
+            // More lenient visibility - show images even when slightly behind
+            const fadeZoneStart = -20;
+            const fadeZoneEnd = -50;
             const isVisible = z > fadeZoneEnd;
             let fadeOpacity = 1;
-            if (z <= fadeZoneStart) {
-                fadeOpacity = Math.max(0, (z - fadeZoneEnd) / (fadeZoneStart - fadeZoneEnd));
+            if (z <= fadeZoneStart && z > fadeZoneEnd) {
+                fadeOpacity = Math.max(0.1, (z - fadeZoneEnd) / (fadeZoneStart - fadeZoneEnd));
+            } else if (z <= fadeZoneEnd) {
+                fadeOpacity = 0.1; // Still slightly visible even when behind
             }
             
             const distanceFromCenter = Math.sqrt(x * x + y * y);
@@ -7432,8 +7435,15 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         const worldPositions = calculateWorldPositions();
         containerElement.innerHTML = '';
         
-        worldPositions.forEach((pos, index) => {
-            if (!pos.isVisible) return;
+        // Sort by z-index for proper rendering order
+        const sortedPositions = worldPositions
+            .map((pos, index) => ({ ...pos, originalIndex: index }))
+            .sort((a, b) => b.z - a.z); // Render back to front
+        
+        sortedPositions.forEach((pos) => {
+            const index = pos.originalIndex;
+            // Show all images, but with reduced opacity if behind
+            // if (!pos.isVisible && pos.fadeOpacity < 0.1) return;
             
             const image = images[index];
             if (!image) return;
@@ -7456,7 +7466,7 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 height: ${imageSize}px;
                 left: ${centerX + pos.x}px;
                 top: ${centerY + pos.y}px;
-                opacity: ${pos.fadeOpacity};
+                opacity: ${Math.max(0.3, pos.fadeOpacity)};
                 transform: translate(-50%, -50%) scale(${finalScale});
                 z-index: ${pos.zIndex};
                 cursor: pointer;
@@ -7538,7 +7548,8 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                             Math.pow(touch.clientX - imageTouchStartPos.x, 2) + 
                             Math.pow(touch.clientY - imageTouchStartPos.y, 2)
                         );
-                        if (dragDistance > 10) {
+                        // Increase threshold to 15px to make taps easier
+                        if (dragDistance > 15) {
                             imageHasDragged = true;
                         }
                     }
@@ -7547,18 +7558,23 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                 // Touch end handler to show modal
                 imgDiv.addEventListener('touchend', (e) => {
                     const touchTime = Date.now() - imageTouchStartTime;
-                    // Only show modal if it was a tap (not a drag) and quick tap (< 300ms)
-                    if (!imageHasDragged && touchTime < 300 && !isDragging) {
+                    // Only show modal if it was a tap (not a drag) and quick tap (< 500ms)
+                    if (!imageHasDragged && touchTime < 500) {
+                        // Stop propagation immediately to prevent container from handling it
                         e.stopPropagation();
-                        e.preventDefault();
-                        const shareData = imageToShareMap[image] || null;
-                        showImageModal(image, shareData);
+                        e.stopImmediatePropagation();
+                        
+                        // Use setTimeout to ensure this happens after drag handlers
+                        setTimeout(() => {
+                            const shareData = imageToShareMap[image] || null;
+                            showImageModal(image, shareData);
+                        }, 10);
                     }
                     // Reset for next interaction
                     imageHasDragged = false;
                     imageTouchStartPos = { x: 0, y: 0 };
                     imageTouchStartTime = 0;
-                }, { passive: false });
+                }, { passive: false, capture: true });
             }
             
             // Prevent image drag
@@ -7873,25 +7889,24 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
                         (window.innerWidth <= 768);
         
-        if (isMobile) {
-            // On mobile, always allow dragging for sphere rotation
-            // Don't check for image items - let everything rotate
-            e.preventDefault();
-            const touch = e.touches[0];
-            isDragging = true;
-            velocity = { x: 0, y: 0 };
-            lastMousePos = { x: touch.clientX, y: touch.clientY };
-            mouseDownPos = { x: touch.clientX, y: touch.clientY };
-            return;
+        const touch = e.touches[0];
+        if (!touch) return;
+        
+        // Check if touch is on an image - if so, let image handle it
+        const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (elementAtPoint && elementAtPoint.closest('.sphere-image-item')) {
+            return; // Let image handle the touch for modal
         }
         
-        // Desktop: Don't start dragging if clicking on an image (to show modal)
+        // Also check target
         if (e.target.closest('.sphere-image-item')) {
-            return; // Let click handler show modal
+            return; // Let image handle the touch
         }
+        
+        // Start dragging only if not on an image
         e.preventDefault();
-        const touch = e.touches[0];
         isDragging = true;
+        hasDragged = false;
         velocity = { x: 0, y: 0 };
         lastMousePos = { x: touch.clientX, y: touch.clientY };
         mouseDownPos = { x: touch.clientX, y: touch.clientY };
@@ -7900,16 +7915,23 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
     function handleTouchMove(e) {
         if (!isDragging) return;
         
+        const touch = e.touches[0];
+        if (!touch) return;
+        
+        // Check if touch is over an image - if so, stop dragging and let image handle it
+        const elementAtPoint = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (elementAtPoint && elementAtPoint.closest('.sphere-image-item')) {
+            isDragging = false; // Stop dragging to allow image tap
+            return;
+        }
+        
         // Only prevent default if touch is within the container to allow scrolling elsewhere
         const isContainerEvent = containerElement.contains(e.target) || 
                                  e.target === containerElement;
         
-        if (isContainerEvent && isDragging) {
+        if (isContainerEvent && isDragging && hasDragged) {
             e.preventDefault(); // Only prevent default for container drag events
         }
-        
-        const touch = e.touches[0];
-        if (!touch) return;
         
         const deltaX = touch.clientX - lastMousePos.x;
         const deltaY = touch.clientY - lastMousePos.y;
