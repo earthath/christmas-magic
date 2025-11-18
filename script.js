@@ -412,124 +412,84 @@ const quizResults = {
 };
 
 // EMERGENCY: Run cleanup immediately on script load (before DOM is ready)
+// Simple one-time cleanup on page load to remove any existing modals
 (function() {
     if (typeof document !== 'undefined' && document.body) {
         const modals = document.querySelectorAll('.sphere-image-modal');
         modals.forEach(m => {
             try { m.remove(); } catch(e) {}
-            try { m.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important;'; } catch(e) {}
         });
     }
 })();
 
-// Global function to clean up any lingering modals (defined early for use in global handlers)
-function cleanupSphereModals() {
-    // AGGRESSIVE cleanup - remove ALL modals immediately
-    const existingModals = document.querySelectorAll('.sphere-image-modal');
-    existingModals.forEach(modal => {
-        // Force remove immediately without any checks
-        try {
-            modal.removeAttribute('data-modal-active');
-            modal.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important; visibility: hidden !important; opacity: 0 !important; position: absolute !important; left: -9999px !important;';
-            if (modal.parentNode) {
-                modal.remove();
-            }
-        } catch (err) {
-            // If remove fails, just hide it completely
-            modal.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important;';
-            if (modal.parentNode) {
-                modal.parentNode.removeChild(modal);
-            }
-        }
-    });
-    
-    // Also check for any elements with high z-index that might be blocking
+// Debug function to find blocking elements
+window.findBlockingElements = function() {
     const allElements = document.querySelectorAll('*');
+    const blocking = [];
     allElements.forEach(el => {
-        if (el.classList && el.classList.contains('sphere-image-modal')) {
-            try {
-                el.remove();
-            } catch (err) {
-                el.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important;';
-            }
+        const styles = window.getComputedStyle(el);
+        const zIndex = parseInt(styles.zIndex) || 0;
+        const position = styles.position;
+        const pointerEvents = styles.pointerEvents;
+        const display = styles.display;
+        
+        if ((position === 'fixed' || position === 'absolute') && 
+            zIndex >= 1000 && 
+            display !== 'none' &&
+            pointerEvents !== 'none' &&
+            el.offsetWidth > 0 && 
+            el.offsetHeight > 0) {
+            blocking.push({
+                element: el,
+                tag: el.tagName,
+                class: el.className,
+                zIndex: zIndex,
+                position: position,
+                pointerEvents: pointerEvents,
+                width: el.offsetWidth,
+                height: el.offsetHeight
+            });
         }
     });
-}
-
-// Debug function to check for blocking modals (can be called from console)
-window.checkForBlockingModals = function() {
-    const modals = document.querySelectorAll('.sphere-image-modal');
-    console.log('Found modals:', modals.length);
-    modals.forEach((modal, i) => {
-        const styles = window.getComputedStyle(modal);
-        console.log(`Modal ${i}:`, {
-            display: styles.display,
-            zIndex: styles.zIndex,
-            pointerEvents: styles.pointerEvents,
-            visibility: styles.visibility,
-            opacity: styles.opacity,
-            position: styles.position,
-            dataActive: modal.getAttribute('data-modal-active'),
-            inDOM: modal.parentNode !== null
-        });
-    });
-    return modals;
+    console.log('Blocking elements:', blocking);
+    return blocking;
 };
-
-// EMERGENCY: Global click handler to force cleanup if anything is blocking
-window.addEventListener('click', function(e) {
-    // If click seems to be blocked, force cleanup
-    const modals = document.querySelectorAll('.sphere-image-modal');
-    if (modals.length > 0) {
-        // Check if click target is a button or interactive element
-        const target = e.target;
-        const isInteractive = target.tagName === 'BUTTON' || 
-                             target.tagName === 'INPUT' || 
-                             target.tagName === 'A' ||
-                             target.closest('button') ||
-                             target.closest('form');
-        if (isInteractive) {
-            // Force cleanup before allowing click
-            cleanupSphereModals();
-        }
-    }
-}, false); // Use bubble phase, not capture
-
-// Note: cleanupSphereModals() is called by individual button handlers to prevent blocking
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // CRITICAL: Clean up any modals that might be blocking on page load - RUN IMMEDIATELY
-    cleanupSphereModals();
-    
-    // Run cleanup multiple times to ensure nothing is blocking
-    setTimeout(() => cleanupSphereModals(), 0);
-    setTimeout(() => cleanupSphereModals(), 50);
-    setTimeout(() => cleanupSphereModals(), 100);
-    setTimeout(() => cleanupSphereModals(), 200);
-    setTimeout(() => cleanupSphereModals(), 500);
-    setTimeout(() => cleanupSphereModals(), 1000);
-    
-    // Also run cleanup when page becomes visible
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-            cleanupSphereModals();
-        }
+    // One-time cleanup of any existing modals and blocking elements
+    const existingModals = document.querySelectorAll('.sphere-image-modal');
+    existingModals.forEach(modal => {
+        try { 
+            modal.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important; visibility: hidden !important; opacity: 0 !important;';
+            modal.remove(); 
+        } catch(e) {}
     });
     
-    // MOBILE: Continuous cleanup to prevent any modals from blocking
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                    (window.innerWidth <= 768);
-    if (isMobile) {
-        // Run cleanup every 500ms on mobile to ensure no modals exist
-        setInterval(() => {
-            cleanupSphereModals();
-        }, 500);
+    // Force remove any elements with sphere-image-modal class
+    setTimeout(() => {
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(el => {
+            if (el.classList && el.classList.contains('sphere-image-modal')) {
+                try {
+                    el.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important; visibility: hidden !important; opacity: 0 !important; width: 0 !important; height: 0 !important;';
+                    if (el.parentNode) el.remove();
+                } catch(e) {}
+            }
+        });
         
-        // Also cleanup on any touch event
-        document.addEventListener('touchstart', () => cleanupSphereModals(), { passive: true });
-        document.addEventListener('touchend', () => cleanupSphereModals(), { passive: true });
-    }
+        // Also check for any fixed position elements covering the page
+        const fixedElements = document.querySelectorAll('[style*="position: fixed"], [style*="position:fixed"]');
+        fixedElements.forEach(el => {
+            const styles = window.getComputedStyle(el);
+            if (parseInt(styles.zIndex) >= 10000 && el.classList.contains('sphere-image-modal')) {
+                try {
+                    el.style.cssText = 'display: none !important; pointer-events: none !important; z-index: -1 !important;';
+                    if (el.parentNode) el.remove();
+                } catch(e) {}
+            }
+        });
+    }, 100);
     
     try {
         initModernNavbar();
@@ -7385,6 +7345,7 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
     let animationFrameId = null;
     let mouseDownPos = { x: 0, y: 0 };
     let hasDragged = false;
+    let documentListenersAttached = false; // Track if document listeners are attached
     
     // Generate sphere positions using Fibonacci distribution
     function generateSpherePositions() {
@@ -7512,35 +7473,94 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             imgDiv.addEventListener('mouseenter', () => { hoveredIndex = index; render(); });
             imgDiv.addEventListener('mouseleave', () => { hoveredIndex = null; render(); });
             
-            // Prevent container drag when clicking on image
-            imgDiv.addEventListener('mousedown', (e) => {
-                e.stopPropagation(); // Prevent container drag from starting
-            });
+            // Prevent container drag when clicking on image (desktop only)
+            // On mobile, allow touch events to work for sphere rotation
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                            (window.innerWidth <= 768);
             
-            // Click handler to show modal - DISABLED ON MOBILE
-            const handleImageClick = (e) => {
-                // On mobile, don't show modal - just prevent default behavior
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                                (window.innerWidth <= 768);
-                if (isMobile) {
-                    e.stopPropagation();
-                    return; // Don't show modal on mobile
-                }
+            // Track drag state per image
+            let imageHasDragged = false;
+            let imageMouseDownPos = { x: 0, y: 0 };
+            let imageTouchStartPos = { x: 0, y: 0 };
+            let imageTouchStartTime = 0;
+            
+            // Desktop: mouse events
+            if (!isMobile) {
+                imgDiv.addEventListener('mousedown', (e) => {
+                    e.stopPropagation(); // Prevent container drag from starting
+                    imageHasDragged = false;
+                    imageMouseDownPos = { x: e.clientX, y: e.clientY };
+                });
                 
-                e.stopPropagation();
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                console.log('Image clicked, showing modal'); // Debug log
-                selectedImage = image;
-                const shareData = imageToShareMap[image] || null;
-                showImageModal(image, shareData);
-                return false;
-            };
-            imgDiv.addEventListener('click', handleImageClick, false); // Use bubble, not capture
-            imgDiv.addEventListener('touchend', (e) => {
-                // On mobile touch, just prevent and don't show modal
-                e.stopPropagation();
-            }, false);
+                // Track if image was dragged
+                imgDiv.addEventListener('mousemove', (e) => {
+                    if (imageMouseDownPos.x !== 0 || imageMouseDownPos.y !== 0) {
+                        const dragDistance = Math.sqrt(
+                            Math.pow(e.clientX - imageMouseDownPos.x, 2) + 
+                            Math.pow(e.clientY - imageMouseDownPos.y, 2)
+                        );
+                        if (dragDistance > 5) {
+                            imageHasDragged = true;
+                        }
+                    }
+                });
+                
+                // Click handler to show modal
+                const handleImageClick = (e) => {
+                    // Only show modal if user didn't drag
+                    if (!imageHasDragged) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const shareData = imageToShareMap[image] || null;
+                        showImageModal(image, shareData);
+                    }
+                    // Reset for next interaction
+                    imageHasDragged = false;
+                    imageMouseDownPos = { x: 0, y: 0 };
+                };
+                
+                imgDiv.addEventListener('click', handleImageClick);
+            } else {
+                // Mobile: touch events
+                imgDiv.addEventListener('touchstart', (e) => {
+                    const touch = e.touches[0];
+                    if (touch) {
+                        imageHasDragged = false;
+                        imageTouchStartPos = { x: touch.clientX, y: touch.clientY };
+                        imageTouchStartTime = Date.now();
+                    }
+                }, { passive: true });
+                
+                imgDiv.addEventListener('touchmove', (e) => {
+                    const touch = e.touches[0];
+                    if (touch && imageTouchStartPos.x !== 0) {
+                        const dragDistance = Math.sqrt(
+                            Math.pow(touch.clientX - imageTouchStartPos.x, 2) + 
+                            Math.pow(touch.clientY - imageTouchStartPos.y, 2)
+                        );
+                        if (dragDistance > 10) {
+                            imageHasDragged = true;
+                        }
+                    }
+                }, { passive: true });
+                
+                // Touch end handler to show modal
+                imgDiv.addEventListener('touchend', (e) => {
+                    const touchTime = Date.now() - imageTouchStartTime;
+                    // Only show modal if it was a tap (not a drag) and quick tap (< 300ms)
+                    if (!imageHasDragged && touchTime < 300 && !isDragging) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const shareData = imageToShareMap[image] || null;
+                        showImageModal(image, shareData);
+                    }
+                    // Reset for next interaction
+                    imageHasDragged = false;
+                    imageTouchStartPos = { x: 0, y: 0 };
+                    imageTouchStartTime = 0;
+                }, { passive: false });
+            }
+            
             // Prevent image drag
             const img = imgDiv.querySelector('img');
             if (img) {
@@ -7553,18 +7573,8 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
         });
     }
     
-    // Show image modal
+    // Show image modal - RE-ENABLED with non-blocking implementation for all devices
     function showImageModal(imageSrc, shareData = null) {
-        console.log('showImageModal called', imageSrc, shareData); // Debug log
-        
-        // CRITICAL: On mobile, don't create modal at all - just return
-        // This prevents any blocking issues
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                        (window.innerWidth <= 768);
-        if (isMobile) {
-            console.log('Mobile detected - skipping modal to prevent blocking');
-            return; // Don't create modal on mobile
-        }
         
         // Remove any existing modal first
         const existingModal = document.querySelector('.sphere-image-modal');
@@ -7623,27 +7633,28 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
                         position: absolute;
                         top: 0.5rem;
                         right: 0.5rem;
-                        width: 44px;
-                        height: 44px;
-                        min-width: 44px;
-                        min-height: 44px;
-                        background: rgba(0, 0, 0, 0.7);
+                        width: 48px;
+                        height: 48px;
+                        min-width: 48px;
+                        min-height: 48px;
+                        background: rgba(0, 0, 0, 0.8);
                         border-radius: 50%;
                         color: white;
-                        border: 2px solid rgba(255, 255, 255, 0.3);
+                        border: 3px solid rgba(255, 255, 255, 0.5);
                         cursor: pointer;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 28px;
+                        font-size: 32px;
                         font-weight: bold;
                         line-height: 1;
-                        z-index: 10002;
+                        z-index: 10003;
                         touch-action: manipulation;
-                        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3);
+                        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.5);
                         user-select: none;
-                        pointer-events: auto;
-                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+                        pointer-events: auto !important;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+                        transition: transform 0.2s ease;
                     ">×</button>
                 </div>
                 ${shareData ? `
@@ -7750,48 +7761,45 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
             
             selectedImage = null;
             
-            // Force a cleanup check
-            setTimeout(() => cleanupSphereModals(), 0);
-            
             return false;
         };
         
-        // Wait for DOM to be ready, then attach handlers
-        setTimeout(() => {
-            const closeBtn = modal.querySelector('.sphere-modal-close') || document.getElementById('sphereModalCloseBtn');
-            if (closeBtn) {
-                console.log('Close button found, attaching handlers'); // Debug log
-                
-                // Remove all existing listeners first
-                const newCloseBtn = closeBtn.cloneNode(true);
-                closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
-                
-                // Add multiple event listeners for maximum compatibility (without capture to avoid blocking other events)
-                newCloseBtn.addEventListener('click', closeModal, { passive: false });
-                newCloseBtn.addEventListener('touchend', closeModal, { passive: false });
-                newCloseBtn.addEventListener('touchstart', (e) => {
-                    e.stopPropagation(); // Don't prevent default to allow normal touch behavior
-                }, { passive: false });
-                // Also try pointer events
-                newCloseBtn.addEventListener('pointerup', closeModal, { passive: false });
-                
-                // Direct onclick as ultimate fallback
-                newCloseBtn.onclick = closeModal;
-                newCloseBtn.ontouchend = closeModal;
-                
-                // Make sure button is interactive
-                newCloseBtn.style.pointerEvents = 'auto';
-                newCloseBtn.style.touchAction = 'manipulation';
-                newCloseBtn.style.cursor = 'pointer';
-                
-                console.log('Close button handlers attached'); // Debug log
-            } else {
-                console.error('Close button not found!'); // Debug log
-            }
-        }, 100);
+        // Attach close button handlers immediately
+        const closeBtn = modal.querySelector('.sphere-modal-close') || document.getElementById('sphereModalCloseBtn');
+        if (closeBtn) {
+            // Add multiple event listeners for maximum compatibility
+            const handleClose = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeModal(e);
+            };
+            
+            closeBtn.addEventListener('click', handleClose, { passive: false });
+            closeBtn.addEventListener('touchend', handleClose, { passive: false });
+            closeBtn.addEventListener('pointerup', handleClose, { passive: false });
+            
+            // Direct handlers as fallback
+            closeBtn.onclick = handleClose;
+            closeBtn.ontouchend = handleClose;
+            
+            // Make sure button is interactive
+            closeBtn.style.pointerEvents = 'auto !important';
+            closeBtn.style.touchAction = 'manipulation !important';
+            closeBtn.style.cursor = 'pointer !important';
+            closeBtn.style.zIndex = '10003 !important';
+        }
         
-        // Background click handler - completely removed to prevent blocking
-        // Users can close via the X button only
+        // Background click handler - removed to prevent blocking
+        // Users can close via the X button or ESC key only
+        
+        // ESC key to close modal
+        const escHandler = (e) => {
+            if (e.key === 'Escape' && modal && modal.getAttribute('data-modal-active') === 'true') {
+                closeModal(e);
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
         
         document.body.appendChild(modal);
         
@@ -7818,6 +7826,9 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
     
     function handleMouseMove(e) {
         if (!isDragging) return;
+        
+        // NEVER prevent default or stop propagation - allow all clicks to work normally
+        // This handler only processes drag events, it doesn't block anything
         
         // Check if user has actually dragged (moved more than a few pixels)
         const dragDistance = Math.sqrt(
@@ -7857,23 +7868,49 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
     }
     
     function handleTouchStart(e) {
-        // Don't start dragging if touching an image
-        if (e.target.closest('.sphere-image-item')) {
-            // DISABLED: Don't show modal on mobile touch - it blocks everything
-            // Just prevent dragging, don't show modal
+        // On mobile, allow sphere to rotate even when touching images
+        // Just don't show modal, but allow dragging
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                        (window.innerWidth <= 768);
+        
+        if (isMobile) {
+            // On mobile, always allow dragging for sphere rotation
+            // Don't check for image items - let everything rotate
+            e.preventDefault();
+            const touch = e.touches[0];
+            isDragging = true;
+            velocity = { x: 0, y: 0 };
+            lastMousePos = { x: touch.clientX, y: touch.clientY };
+            mouseDownPos = { x: touch.clientX, y: touch.clientY };
             return;
+        }
+        
+        // Desktop: Don't start dragging if clicking on an image (to show modal)
+        if (e.target.closest('.sphere-image-item')) {
+            return; // Let click handler show modal
         }
         e.preventDefault();
         const touch = e.touches[0];
         isDragging = true;
         velocity = { x: 0, y: 0 };
         lastMousePos = { x: touch.clientX, y: touch.clientY };
+        mouseDownPos = { x: touch.clientX, y: touch.clientY };
     }
     
     function handleTouchMove(e) {
         if (!isDragging) return;
-        e.preventDefault();
+        
+        // Only prevent default if touch is within the container to allow scrolling elsewhere
+        const isContainerEvent = containerElement.contains(e.target) || 
+                                 e.target === containerElement;
+        
+        if (isContainerEvent && isDragging) {
+            e.preventDefault(); // Only prevent default for container drag events
+        }
+        
         const touch = e.touches[0];
+        if (!touch) return;
+        
         const deltaX = touch.clientX - lastMousePos.x;
         const deltaY = touch.clientY - lastMousePos.y;
         
@@ -7983,13 +8020,65 @@ function createSphereGridViewer(images, containerElement, sharesData = null) {
     // Initial size for first render
     CONFIG.containerSize = actualContainerSize;
     
-    // Add event listeners
+    // Only attach document listeners when actually dragging to avoid blocking other clicks
+    const attachDocumentListeners = () => {
+        if (!documentListenersAttached && isDragging) {
+            documentListenersAttached = true;
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.addEventListener('touchmove', handleTouchMove, { passive: false });
+            document.addEventListener('touchend', handleTouchEnd);
+        }
+    };
+    const detachDocumentListeners = () => {
+        if (documentListenersAttached) {
+            documentListenersAttached = false;
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('touchmove', handleTouchMove);
+            document.removeEventListener('touchend', handleTouchEnd);
+        }
+    };
+    
+    // Store original handlers
+    const originalHandleMouseDown = handleMouseDown;
+    const originalHandleMouseUp = handleMouseUp;
+    const originalHandleTouchStart = handleTouchStart;
+    const originalHandleTouchEnd = handleTouchEnd;
+    
+    // Wrap handlers to attach/detach document listeners
+    handleMouseDown = function(e) {
+        originalHandleMouseDown(e);
+        if (isDragging) {
+            attachDocumentListeners();
+        }
+    };
+    
+    handleMouseUp = function(e) {
+        originalHandleMouseUp(e);
+        detachDocumentListeners();
+    };
+    
+    handleTouchStart = function(e) {
+        originalHandleTouchStart(e);
+        if (isDragging) {
+            attachDocumentListeners();
+        }
+    };
+    
+    handleTouchEnd = function(e) {
+        originalHandleTouchEnd(e);
+        detachDocumentListeners();
+    };
+    
+    // Add event listeners - ONLY on container initially, document listeners added only when dragging
     containerElement.addEventListener('mousedown', handleMouseDown);
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    containerElement.addEventListener('mousemove', handleMouseMove);
+    containerElement.addEventListener('mouseup', handleMouseUp);
+    containerElement.addEventListener('mouseleave', handleMouseUp); // Stop dragging when mouse leaves container
     containerElement.addEventListener('touchstart', handleTouchStart, { passive: false });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
+    containerElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+    containerElement.addEventListener('touchend', handleTouchEnd);
     
     // Animation loop
     function animate() {
@@ -8074,10 +8163,7 @@ function showSphereView() {
 }
 
 function initShareChristmas() {
-    // Clean up any lingering modals that might be blocking clicks - do this FIRST
-    cleanupSphereModals();
-    
-    // REMOVED: Document-level click handlers that were blocking all clicks
+    // REMOVED: All cleanupSphereModals calls - they were causing blocking
     
     // Initialize sphere view automatically when section loads
     const container = document.getElementById('imgSphereContainer');
@@ -8111,8 +8197,6 @@ function initShareChristmas() {
     // Image upload
     if (imageBtn) {
         imageBtn.addEventListener('click', (e) => {
-            // Clean up any blocking modals first
-            cleanupSphereModals();
             imageInput.click();
         });
     }
@@ -8150,7 +8234,6 @@ function initShareChristmas() {
     
     if (removeImageBtn) {
         removeImageBtn.addEventListener('click', (e) => {
-            cleanupSphereModals();
             imageInput.value = '';
             imagePlaceholder.style.display = 'flex';
             imagePreview.style.display = 'none';
@@ -8172,7 +8255,6 @@ function initShareChristmas() {
     // Get current location (required)
     if (getLocationBtn) {
         getLocationBtn.addEventListener('click', (e) => {
-            cleanupSphereModals();
             if (!navigator.geolocation) {
                 if (locationStatus) {
                     locationStatus.textContent = '❌ Geolocation not supported in this browser.';
@@ -8294,7 +8376,6 @@ function initShareChristmas() {
     if (form) {
         form.addEventListener('submit', (e) => {
             e.preventDefault();
-            cleanupSphereModals();
             submitChristmasShare();
         });
     }
@@ -8782,12 +8863,6 @@ function initControlMenu() {
     
     // Close menu when clicking outside
     document.addEventListener('click', (e) => {
-        // First check if there's a blocking modal and clean it up
-        const blockingModal = document.querySelector('.sphere-image-modal[data-modal-active="true"]');
-        if (blockingModal) {
-            cleanupSphereModals();
-        }
-        
         if (!controlButtonsWrapper.contains(e.target)) {
             controlButtonsWrapper.classList.remove('active');
             controlMenuToggle.classList.remove('active');

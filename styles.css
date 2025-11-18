@@ -7845,6 +7845,10 @@ body:not(.dark-mode) .leaderboard-view-btn.active {
     gap: 1rem;
     min-height: 600px;
     flex: 1;
+    /* Ensure container doesn't block clicks outside */
+    pointer-events: auto;
+    position: relative;
+    z-index: 1;
 }
 
 body:not(.dark-mode) .img-sphere-container {
@@ -7888,6 +7892,9 @@ body:not(.dark-mode) .img-sphere-container {
     aspect-ratio: 1;
     margin: 0 auto;
     overflow: visible;
+    /* Ensure it doesn't block clicks outside its bounds */
+    pointer-events: auto;
+    isolation: isolate;
 }
 
 @media (max-width: 968px) {
@@ -7949,6 +7956,26 @@ body:not(.dark-mode) .img-sphere-container {
 .sphere-image-modal {
     animation: fadeIn 0.3s ease-out;
     touch-action: manipulation;
+    /* CRITICAL: Background doesn't block clicks - only content is interactive */
+    pointer-events: none !important;
+}
+
+.sphere-image-modal[data-modal-active="true"] {
+    pointer-events: none !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.sphere-image-modal:not([data-modal-active="true"]) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    z-index: -1 !important;
+}
+
+.sphere-image-modal .sphere-modal-content {
+    pointer-events: auto !important;
 }
 
 .sphere-image-modal[data-modal-active="false"],
@@ -7956,13 +7983,14 @@ body:not(.dark-mode) .img-sphere-container {
     display: none !important;
     pointer-events: none !important;
     z-index: -1 !important;
+    visibility: hidden !important;
 }
 
 .sphere-modal-close {
     touch-action: manipulation !important;
-    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.3) !important;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.5) !important;
     pointer-events: auto !important;
-    z-index: 10002 !important;
+    z-index: 10003 !important;
     position: absolute !important;
     cursor: pointer !important;
     -webkit-user-select: none !important;
@@ -7970,8 +7998,8 @@ body:not(.dark-mode) .img-sphere-container {
 }
 
 .sphere-modal-close:active {
+    transform: scale(0.9) !important;
     background: rgba(0, 0, 0, 0.9) !important;
-    transform: scale(0.95);
 }
 
 /* Ensure button is always on top */
