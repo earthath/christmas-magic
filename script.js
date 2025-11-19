@@ -3960,6 +3960,11 @@ function initSockHanging() {
     updateStats();
     renderFeed();
     renderRankings();
+    
+    // Update "hangingNow" stat every minute to reflect time-based changes
+    setInterval(() => {
+        updateStats();
+    }, 60000); // Update every minute
 
     // Sock selection grid
     const sockOptions = document.querySelectorAll('.sock-option');
@@ -4169,7 +4174,19 @@ function updateStats() {
         currentDisplayEl.textContent = actualDisplayed;
     }
     if (hangingNowEl) {
-        hangingNowEl.textContent = sockStats.hanging || 0;
+        // Calculate "hanging now" as socks hung in the last hour
+        const now = new Date();
+        const oneHourAgo = now.getTime() - (60 * 60 * 1000); // 1 hour in milliseconds
+        
+        const hangingNowCount = sockData.filter(sock => {
+            if (!sock.timestamp) return false;
+            const sockTime = sock.timestamp instanceof Date 
+                ? sock.timestamp.getTime() 
+                : new Date(sock.timestamp).getTime();
+            return sockTime >= oneHourAgo;
+        }).length;
+        
+        hangingNowEl.textContent = hangingNowCount;
     }
     
     // Update stats (no longer saved to localStorage)
@@ -4201,7 +4218,7 @@ function initMap() {
     map = L.map('sockMap', {
         zoomControl: true,
         attributionControl: false
-    }).setView([defaultLat, defaultLng], 2);
+    }).setView([defaultLat, defaultLng], 3);
 
     // Add tile layer (using OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -4218,8 +4235,8 @@ function initMap() {
                     lng: position.coords.longitude
                 };
                 
-                // Center map on user location
-                map.setView([userLocation.lat, userLocation.lng], 10);
+                // Center map on user location with better zoom level
+                map.setView([userLocation.lat, userLocation.lng], 8);
                 
                 // Add user location marker
                 const userIcon = L.divIcon({

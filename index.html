@@ -701,8 +701,8 @@ Schitt's Creek, PA 24216</textarea>
         </div>
     </section>
 
-    <!-- Sock Hanging Section -->
-    <section id="sock-hanging" class="section">
+    <!-- Sock Hanging Section (Backup - Original Design) -->
+    <section id="sock-hanging-bckup" class="section">
         <div class="container">
             <!-- Header -->
             <div class="sock-header">
@@ -712,15 +712,15 @@ Schitt's Creek, PA 24216</textarea>
                 <!-- Stats Section -->
                 <div class="sock-stats-compact">
                     <div class="stat-item">
-                        <div class="stat-number-compact" id="totalSocks">0</div>
+                        <div class="stat-number-compact" id="totalSocksBckup">0</div>
                         <div class="stat-label-compact">Total Socks</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number-compact" id="currentDisplay">0</div>
+                        <div class="stat-number-compact" id="currentDisplayBckup">0</div>
                         <div class="stat-label-compact">Currently Displayed</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number-compact" id="hangingNow">0</div>
+                        <div class="stat-number-compact" id="hangingNowBckup">0</div>
                         <div class="stat-label-compact">Hanging Now</div>
                     </div>
                 </div>
@@ -736,7 +736,7 @@ Schitt's Creek, PA 24216</textarea>
                         
                         <div class="form-group">
                             <label class="form-label">Sock Selection</label>
-                            <div class="sock-grid" id="sockGrid">
+                            <div class="sock-grid" id="sockGridBckup">
                                 <button class="sock-option active" data-sock="🧦" data-name="Red Sock">
                                     <span class="sock-emoji">🧦</span>
                                     <span class="sock-name">Red Sock</span>
@@ -766,18 +766,18 @@ Schitt's Creek, PA 24216</textarea>
 
                         <div class="form-group">
                             <label class="form-label">Message (Optional)</label>
-                            <textarea id="sockMessage" class="sock-message" placeholder="Enter a message to send with your sock..." maxlength="100"></textarea>
-                            <div class="char-counter"><span id="charCount">0</span>/100</div>
+                            <textarea id="sockMessageBckup" class="sock-message" placeholder="Enter a message to send with your sock..." maxlength="100"></textarea>
+                            <div class="char-counter"><span id="charCountBckup">0</span>/100</div>
                         </div>
 
-                        <button class="hang-sock-btn-large" id="hangSockBtn">
+                        <button class="hang-sock-btn-large" id="hangSockBtnBckup">
                             <span class="btn-icon">✨</span>
-                            <span class="btn-sock" id="btnSockEmoji">🧦</span>
+                            <span class="btn-sock" id="btnSockEmojiBckup">🧦</span>
                             <span class="btn-text">Hang Sock!</span>
                         </button>
                         
                         <!-- Share Button (shown after hanging) -->
-                        <button class="action-btn share-sock-btn" id="shareSockBtn" style="display: none; margin-top: 0.75rem;">
+                        <button class="action-btn share-sock-btn" id="shareSockBtnBckup" style="display: none; margin-top: 0.75rem;">
                             📱 Share Your Sock
                         </button>
                     </div>
@@ -787,10 +787,10 @@ Schitt's Creek, PA 24216</textarea>
                         <div class="map-header">
                             <h3 class="map-title">🗺️ Global Sock Map</h3>
                             <div class="map-info">
-                                <span id="mapCount">0</span> socks displayed
+                                <span id="mapCountBckup">0</span> socks displayed
                             </div>
                         </div>
-                        <div class="sock-map" id="sockMap">
+                        <div class="sock-map" id="sockMapBckup">
                             <!-- Map will be generated via JavaScript -->
                         </div>
                         <p class="map-hint">💡 See socks hung around the world in real-time (updates every 5 seconds)</p>
@@ -802,7 +802,7 @@ Schitt's Creek, PA 24216</textarea>
                     <!-- Real-time Feed -->
                     <div class="sock-feed-container">
                         <h3 class="feed-title">⚡ Real-time Feed</h3>
-                        <div class="sock-feed" id="sockFeed">
+                        <div class="sock-feed" id="sockFeedBckup">
                             <!-- Feed items will be added via JavaScript -->
                         </div>
                     </div>
@@ -813,18 +813,18 @@ Schitt's Creek, PA 24216</textarea>
                         
                         <!-- Filter and Search -->
                         <div class="sock-filters">
-                            <input type="text" id="sockSearch" class="sock-search" placeholder="🔍 Search socks...">
-                            <select id="countryFilter" class="country-filter">
+                            <input type="text" id="sockSearchBckup" class="sock-search" placeholder="🔍 Search socks...">
+                            <select id="countryFilterBckup" class="country-filter">
                                 <option value="">All Countries</option>
                             </select>
                         </div>
                         
-                        <div class="rankings-list" id="rankingsList">
+                        <div class="rankings-list" id="rankingsListBckup">
                             <!-- Rankings will be generated via JavaScript -->
                         </div>
                         <p class="rankings-hint">💡 Help your country reach #1!</p>
                         
-                        <button class="action-btn secondary" id="exportMapBtn" style="margin-top: 1rem; width: 100%;">
+                        <button class="action-btn secondary" id="exportMapBtnBckup" style="margin-top: 1rem; width: 100%;">
                             📸 Export Map View
                         </button>
                     </div>
@@ -832,14 +832,183 @@ Schitt's Creek, PA 24216</textarea>
             </div>
             
             <!-- Page Stats -->
-            <div class="page-stats" id="sockPageStats">
+            <div class="page-stats" id="sockPageStatsBckup">
                 <div class="page-stat-item">
-                    <span class="page-stat-number" id="sockTotal">0</span>
+                    <span class="page-stat-number" id="sockTotalBckup">0</span>
                     <span class="page-stat-label">Socks Hung Total</span>
                 </div>
                 <div class="page-stat-item">
-                    <span class="page-stat-number" id="sockToday">0</span>
+                    <span class="page-stat-number" id="sockTodayBckup">0</span>
                     <span class="page-stat-label">Socks Hung Today</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sock Hanging Section (New Redesign) -->
+    <section id="sock-hanging" class="section">
+        <div class="container">
+            <!-- Hero Header -->
+            <div class="sock-hero-new">
+                <div class="sock-hero-content">
+                    <h1 class="sock-hero-title">🧦 Hang Your Sock</h1>
+                    <p class="sock-hero-subtitle">Join thousands of people around the world spreading Christmas cheer!</p>
+                </div>
+                
+                <!-- Live Stats Cards -->
+                <div class="sock-stats-new">
+                    <div class="sock-stat-card">
+                        <div class="sock-stat-icon">🌍</div>
+                        <div class="sock-stat-content">
+                            <div class="sock-stat-number" id="totalSocks">0</div>
+                            <div class="sock-stat-label">Total Socks</div>
+                        </div>
+                    </div>
+                    <div class="sock-stat-card">
+                        <div class="sock-stat-icon">✨</div>
+                        <div class="sock-stat-content">
+                            <div class="sock-stat-number" id="currentDisplay">0</div>
+                            <div class="sock-stat-label">On Map</div>
+                        </div>
+                    </div>
+                    <div class="sock-stat-card">
+                        <div class="sock-stat-icon">⚡</div>
+                        <div class="sock-stat-content">
+                            <div class="sock-stat-number" id="hangingNow">0</div>
+                            <div class="sock-stat-label">Hanging Now</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="sock-layout-new">
+                <!-- Left Side: Form & Map -->
+                <div class="sock-left-new">
+                    <!-- Hang Sock Card -->
+                    <div class="sock-card-new">
+                        <div class="sock-card-header">
+                            <h2 class="sock-card-title">✨ Create Your Sock</h2>
+                            <p class="sock-card-subtitle">Choose a sock and add a message</p>
+                        </div>
+                        
+                        <div class="sock-card-body">
+                            <!-- Sock Selection -->
+                            <div class="sock-selector-new">
+                                <label class="sock-label-new">Choose Your Sock</label>
+                                <div class="sock-grid-new" id="sockGrid">
+                                    <button class="sock-btn-new active" data-sock="🧦" data-name="Red Sock" title="Red Sock">
+                                        <span class="sock-emoji-new">🧦</span>
+                                    </button>
+                                    <button class="sock-btn-new" data-sock="🧤" data-name="Green Sock" title="Green Sock">
+                                        <span class="sock-emoji-new">🧤</span>
+                                    </button>
+                                    <button class="sock-btn-new" data-sock="🧥" data-name="Striped Sock" title="Striped Sock">
+                                        <span class="sock-emoji-new">🧥</span>
+                                    </button>
+                                    <button class="sock-btn-new" data-sock="🎄" data-name="Tree Sock" title="Tree Sock">
+                                        <span class="sock-emoji-new">🎄</span>
+                                    </button>
+                                    <button class="sock-btn-new" data-sock="⭐" data-name="Star Sock" title="Star Sock">
+                                        <span class="sock-emoji-new">⭐</span>
+                                    </button>
+                                    <button class="sock-btn-new" data-sock="🎁" data-name="Gift Sock" title="Gift Sock">
+                                        <span class="sock-emoji-new">🎁</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Message Input -->
+                            <div class="sock-message-new">
+                                <label class="sock-label-new">Your Message <span class="sock-optional">(Optional)</span></label>
+                                <textarea id="sockMessage" class="sock-textarea-new" placeholder="Share your Christmas wishes..." maxlength="100"></textarea>
+                                <div class="sock-char-count"><span id="charCount">0</span>/100</div>
+                            </div>
+
+                            <!-- Hang Button -->
+                            <button class="sock-hang-btn-new" id="hangSockBtn">
+                                <span class="sock-hang-icon">✨</span>
+                                <span class="sock-hang-sock" id="btnSockEmoji">🧦</span>
+                                <span class="sock-hang-text">Hang My Sock!</span>
+                            </button>
+                            
+                            <!-- Share Button -->
+                            <button class="sock-share-btn-new" id="shareSockBtn" style="display: none;">
+                                📱 Share Your Sock
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Map Card -->
+                    <div class="sock-card-new">
+                        <div class="sock-card-header">
+                            <h2 class="sock-card-title">🗺️ Global Sock Map</h2>
+                            <div class="sock-map-badge">
+                                <span id="mapCount">0</span> socks
+                            </div>
+                        </div>
+                        <div class="sock-card-body">
+                            <div class="sock-map-new" id="sockMap">
+                                <!-- Map will be generated via JavaScript -->
+                            </div>
+                            <p class="sock-map-note">💡 Real-time updates every 5 seconds</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side: Feed & Rankings -->
+                <div class="sock-right-new">
+                    <!-- Live Feed Card -->
+                    <div class="sock-card-new">
+                        <div class="sock-card-header">
+                            <h2 class="sock-card-title">⚡ Live Feed</h2>
+                            <div class="sock-feed-badge">Live</div>
+                        </div>
+                        <div class="sock-card-body">
+                            <div class="sock-feed-new" id="sockFeed">
+                                <!-- Feed items will be added via JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rankings Card -->
+                    <div class="sock-card-new">
+                        <div class="sock-card-header">
+                            <h2 class="sock-card-title">🏆 Country Rankings</h2>
+                        </div>
+                        <div class="sock-card-body">
+                            <!-- Filters -->
+                            <div class="sock-filters-new">
+                                <input type="text" id="sockSearch" class="sock-search-new" placeholder="🔍 Search...">
+                                <select id="countryFilter" class="sock-filter-new">
+                                    <option value="">All Countries</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Rankings List -->
+                            <div class="sock-rankings-new" id="rankingsList">
+                                <!-- Rankings will be generated via JavaScript -->
+                            </div>
+                            
+                            <p class="sock-rankings-note">💡 Help your country reach #1!</p>
+                            
+                            <button class="sock-export-btn-new" id="exportMapBtn">
+                                📸 Export Map
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bottom Stats -->
+            <div class="sock-bottom-stats" id="sockPageStats">
+                <div class="sock-bottom-stat">
+                    <div class="sock-bottom-number" id="sockTotal">0</div>
+                    <div class="sock-bottom-label">Total Socks</div>
+                </div>
+                <div class="sock-bottom-stat">
+                    <div class="sock-bottom-number" id="sockToday">0</div>
+                    <div class="sock-bottom-label">Today</div>
                 </div>
             </div>
         </div>
